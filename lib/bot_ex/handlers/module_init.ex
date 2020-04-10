@@ -1,10 +1,10 @@
-defmodule BotEx.ModuleHandler.Init do
+defmodule BotEx.Handlers.ModuleInit do
   @moduledoc """
   A simple macro to initialize a GenServer.
   Takes the current state structure as an argument
   Example
   ```elixir
-  use BotEx.ModuleHandler.Init, state: [menu: []]
+  use BotEx.Handlers.ModuleInit, state: [menu: []]
   ```
   """
 

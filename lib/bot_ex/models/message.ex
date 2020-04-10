@@ -1,20 +1,20 @@
 defmodule BotEx.Models.Message do
-  @moduledoc """
-  Message wrapper
+  @typedoc """
+  Module, that represents message wrapper struct
 
-  - is_cmd: is it a command or not,
-  - module: the name of the module that will be called must match the result of `BotEx.ModuleHandler.get_cmd_name/0`,
-  - action: action,
-  - data: data,
-  - msg: original message
-  - user: current user
-  - user_id: user id
-  - text: message text, if any
-  - force_new - report that editing the message is undesirable
-  - chat_id - chat id
-  - custom_data - any additional data
+  ##
+  - `is_cmd`: is it a command or not,
+  - `module`: the name of the module that will be called must match the result of `BotEx.Handlers.ModuleHandler.get_cmd_name/0`,
+  - `action`: action,
+  - `data`: data,
+  - `msg`: original message
+  - `user`: current user
+  - `user_id`: user id
+  - `text`: message text, if any
+  - `force_new`:- report that editing the message is undesirable
+  - `chat_id`:- chat id
+  - `custom_data`:- any additional data
   """
-
   @type t() :: %__MODULE__{
           is_cmd: boolean(),
           module: binary(),

@@ -14,13 +14,13 @@ The core is built using three key concepts:
   #mix.exs
   def deps do
     [
-      {:botex, "~> 0.6"}
+      {:bot_ex, "~> 0.6"}
     ]
   end
 
  #full available config reference
  #this values set to default
- config :botex,
+ config :bot_ex,
     menu_path: "config/menu.exs",
     routes_path: "config/routes.exs",
     short_map_path: "config/short_map.exs",
@@ -37,7 +37,7 @@ touch config/menu.exs
 ```
 ## Example `config`
 ```elixir
- config :botex,
+ config :bot_ex,
     middlware: [
       my_bot: [
         MyBot.Middleware.MessageTransformer,
@@ -184,8 +184,8 @@ defmodule MyBot.Handlers.Start do
   @moduledoc false
 
   use GenServer
-  use BotEx.ModuleHandler
-  use BotEx.ModuleHandler.Init
+  use BotEx.Handlers.ModuleHandler
+  use BotEx.Handlers.ModuleInit
 
   alias BotEx.Models.Message
 

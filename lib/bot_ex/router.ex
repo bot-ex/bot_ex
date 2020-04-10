@@ -23,16 +23,16 @@ defmodule BotEx.Router do
 
   # return list of routes
   defp get_routes() do
-    case :ets.lookup(:botex_settings, "routes") do
+    case :persistent_term.get({:bot_ex_settings, :routes, :config}, []) do
       [] -> load_routes()
-      [{_, routes}] -> routes
+      routes -> routes
     end
   end
 
   # load routes from file
   defp load_routes() do
     base_routes =
-      Enum.reduce(Config.get_handlers(), %{}, fn {bot, hs}, acc ->
+      Enum.reduce(Config.get(:handlers), %{}, fn {bot, hs}, acc ->
         Map.put(
           acc,
           bot,
@@ -42,7 +42,7 @@ defmodule BotEx.Router do
         )
       end)
 
-    path = Config.get_routes_path()
+    path = Config.get(:routes_path)
 
     full_routes =
       if File.exists?(path) do
@@ -52,7 +52,7 @@ defmodule BotEx.Router do
         base_routes
       end
 
-    :ets.insert(:botex_settings, {"routes", full_routes})
+    :persistent_term.put({:bot_ex_settings, :routes, :config}, full_routes)
 
     full_routes
   end

@@ -27,11 +27,11 @@ defmodule BotEx.Updaters.LogRotate do
 
     if(File.exists?(logFile)) do
       dir = Path.dirname(logFile)
-      newFile = "#{dir}/#{Date.utc_today() |> Date.to_string()}_elixir_dbg.log"
+      newFile = "#{dir}/#{Date.utc_today()}_elixir_dbg.log"
       File.rename(logFile, newFile)
 
-      zipFile = String.to_charlist(newFile)
-      zipName = String.to_charlist("#{newFile}.zip")
+      zipFile = '#{newFile}'
+      zipName = '#{newFile}.zip'
 
       case :zip.create(zipName, [zipFile]) do
         {:ok, _f} -> File.rm!(newFile)

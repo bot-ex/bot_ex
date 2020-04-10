@@ -4,6 +4,7 @@ defmodule BotEx.Application do
   alias BotEx.Helpers.Tools
   alias BotEx.Behaviours.Hook
   alias BotEx.Config
+  alias BotEx.Exceptions.BehaviourError
 
   @spec start(any(), any()) :: {:error, any()} | {:ok, pid()}
   def start(_type, _args) do
@@ -14,7 +15,6 @@ defmodule BotEx.Application do
     ]
 
     :ets.new(:last_call, [:set, :public, :named_table])
-    :ets.new(:botex_settings, [:set, :public, :named_table])
 
     Config.init()
 
@@ -25,10 +25,10 @@ defmodule BotEx.Application do
   end
 
   defp run_hooks() do
-    Config.get_after_start()
+    Config.get(:after_start)
     |> Enum.each(fn hook ->
       unless Tools.is_behaviours?(hook, Hook) do
-        raise "Module #{hook} must implement behaviour BotEx.Behaviours.Hook"
+        raise(BehaviourError, message: "Module #{hook} must implement behaviour BotEx.Behaviours.Hook")
       end
 
       hook.run()

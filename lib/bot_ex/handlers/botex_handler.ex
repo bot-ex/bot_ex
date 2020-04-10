@@ -1,4 +1,4 @@
-defmodule BotEx.ModuleHandler do
+defmodule BotEx.Handlers.ModuleHandler do
   @moduledoc """
   The base macro that all message handlers should implement
   """
@@ -9,13 +9,14 @@ defmodule BotEx.ModuleHandler do
 
       alias BotEx.Models.Message
       alias BotEx.Helpers.UserActions
+      alias BotEx.Exceptions.BehaviourError
 
       @doc """
       Returns a command is responsible for module processing
       """
       @spec get_cmd_name() :: any()
       def get_cmd_name() do
-        raise "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!"
+        raise(BehaviourError, message: "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!")
       end
 
       def child_spec(opts) do
@@ -48,7 +49,7 @@ defmodule BotEx.ModuleHandler do
       return new state
       """
       def handle_message(_a, _b) do
-        raise "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!"
+        raise(BehaviourError, message: "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!")
       end
 
       def start_link(_) do

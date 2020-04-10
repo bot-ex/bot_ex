@@ -27,10 +27,10 @@ defmodule BotEx.PoolSup do
 
   @spec init(any()) :: {:ok, {:supervisor.sup_flags(), [:supervisor.child_spec()]}} | :ignore
   def init(_init_arg) do
-    handlers = Config.get_handlers()
+    handlers = Config.get(:handlers)
 
     children =
-      Config.get_bots()
+      Config.get(:bots)
       |> Enum.map(fn key -> Keyword.get(handlers, key, []) end)
       |> List.flatten()
       |> Enum.map(fn
