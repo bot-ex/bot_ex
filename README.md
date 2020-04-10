@@ -8,13 +8,16 @@ The core is built using three key concepts:
 - middleware - receive a message and transform it in some way. The first in the chain should implement the behavior `BotEx.Behaviours.MiddlewareParser`, all next - `BotEx.Behaviours.Middleware`
 - handlers - process the message and interact with the user. Each handler must implement a behavior `BotEx.Behaviours.Handler`
 
+# Existing libs:
+- [telegram](https://github.com/bot-ex/botex-telegram)
+
 # How to start:
   
   ```elixir
   #mix.exs
   def deps do
     [
-      {:bot_ex, "~> 0.6"}
+      {:botex, "~> 0.1"}
     ]
   end
 
