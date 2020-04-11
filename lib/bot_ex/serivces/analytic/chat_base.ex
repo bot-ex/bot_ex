@@ -6,6 +6,7 @@ defmodule BotEx.Services.Analytic.ChatBase do
   require Logger
 
   alias BotEx.Config
+  alias BotEx.Exceptions.ConfigError
 
   @doc """
   Sends information to analytics collection service
@@ -18,11 +19,11 @@ defmodule BotEx.Services.Analytic.ChatBase do
   - platform: platform
   """
   @spec send_data(binary(), binary() | integer(), binary(), binary()) :: boolean()
-  def   send_data(msg, user_id, intent, platform) do
+  def send_data(msg, user_id, intent, platform) do
     try do
       api_key = get_api_key!()
 
-      HTTPoison.post(
+      HTTPoison.post!(
         "https://chatbase.com/api/message",
         Jason.encode!(%{
           "api_key" => api_key,
@@ -50,13 +51,16 @@ defmodule BotEx.Services.Analytic.ChatBase do
     end
   end
 
-  #return api key from config
+  # return api key from config
   defp get_api_key!() do
+    key = Config.get(:analytic_key)
 
-    key = Config.get_analytic_key()
-    if !is_binary(key)  do
-      raise "You should define a binary key in configuration (:key), to use this module, like:\n"<>
-      "config :botex, analytic_key: key"
+    unless is_binary(key) do
+      raise(ConfigError,
+        message:
+          "You should define a binary key in configuration (:key), to use this module, like:\n" <>
+            "config :bot_ex, analytic_key: key"
+      )
     end
   end
 end

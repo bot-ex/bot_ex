@@ -3,7 +3,7 @@ defmodule BotEx.Mixfile do
 
   def project do
     [
-      app: :botex,
+      app: :bot_ex,
       version: "0.1.0",
       elixir: "~> 1.9",
       elixirc_paths: elixirc_paths(Mix.env),

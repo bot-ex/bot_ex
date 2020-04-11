@@ -1,13 +1,12 @@
 defmodule BotEx.Models.Menu do
-  @moduledoc """
-  Menu.
-
+  @typedoc """
+  Module, that represents menu struct.
+  ## Fields:
   - `name`: menu unique identifier,
   - `text`: menu text,
   - `buttons`: list of buttons `BotEx.Models.Button`  or a function that returns list of buttons
   - `custom`: any data
   """
-
   @type t() :: %__MODULE__{
           name: binary(),
           text: nil | binary(),

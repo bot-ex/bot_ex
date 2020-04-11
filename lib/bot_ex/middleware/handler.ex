@@ -6,6 +6,7 @@ defmodule BotEx.Middleware.Handler do
   alias BotEx.Behaviours.{MiddlewareParser, Middleware}
   alias BotEx.{Router, Config}
   alias BotEx.Helpers.Tools
+  alias BotEx.Exceptions.BehaviourError
 
   @doc """
   Apply middleware modules to messages
@@ -18,7 +19,7 @@ defmodule BotEx.Middleware.Handler do
   @spec init(any) :: {:ok, []}
   def init(_args) do
     middlware =
-      Config.get_middlware()
+      Config.get(:middlware)
       |> check_middleware!()
 
     {:ok, middlware}
@@ -82,11 +83,11 @@ defmodule BotEx.Middleware.Handler do
   defp check_middleware!(all) do
     Enum.each(all, fn {_, [parser | middlware]} ->
       unless Tools.is_behaviours?(parser, MiddlewareParser),
-        do: raise("#{parser} must implement behavior BotEx.Behaviours.MiddlewareParser")
+        do: raise(BehaviourError, message: "#{parser} must implement behavior BotEx.Behaviours.MiddlewareParser")
 
       Enum.each(middlware, fn module ->
         unless Tools.is_behaviours?(module, Middleware),
-          do: raise("#{module} must implement behavior BotEx.Behaviours.Middleware")
+          do: raise(BehaviourError, message: "#{module} must implement behavior BotEx.Behaviours.Middleware")
       end)
     end)
 

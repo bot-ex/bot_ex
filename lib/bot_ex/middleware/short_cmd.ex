@@ -36,7 +36,7 @@ defmodule BotEx.Middleware.ShortCmd do
   @spec check_on_short(binary() | nil, nil | binary(), nil | binary(), atom()) ::
           {binary(), nil | binary(), nil | binary()} | nil
   defp check_on_short(nil, _action, _data, _bot), do: nil
-  defp check_on_short("", _action, _data,  _bot), do: nil
+  defp check_on_short("", _action, _data, _bot), do: nil
 
   defp check_on_short(cmd, action, data, bot) do
     shorts = Map.get(get_shorts(), bot, %{})
@@ -58,15 +58,15 @@ defmodule BotEx.Middleware.ShortCmd do
 
   # return list short commands
   defp get_shorts() do
-    case :ets.lookup(:botex_settings, "shorts") do
+    case :persistent_term.get({:bot_ex_settings, :shorts, :config}, []) do
       [] -> load_shorts()
-      [{_, data}] -> data
+      data -> data
     end
   end
 
   # load shorts from file on first call
   defp load_shorts() do
-    path = Config.get_short_map_path()
+    path = Config.get(:short_map_path)
 
     shorts_cmd =
       if File.exists?(path) do
@@ -76,7 +76,7 @@ defmodule BotEx.Middleware.ShortCmd do
         %{}
       end
 
-    :ets.insert(:botex_settings, {"shorts", shorts_cmd})
+    :persistent_term.put({:bot_ex_settings, :shorts, :config}, shorts_cmd)
 
     shorts_cmd
   end
