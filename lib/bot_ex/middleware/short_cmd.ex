@@ -20,6 +20,8 @@ defmodule BotEx.Middleware.ShortCmd do
   def transform(%Message{action: a, data: d, text: t, from: bot} = t_msg) do
     check_on_short(t, a, d, bot)
     |> fill_command_data(t_msg)
+    
+    %Message{t_msg | is_cmd: false}
   end
 
   defp fill_command_data({new_m, new_a, new_d}, t_msg),
