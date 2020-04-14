@@ -186,7 +186,6 @@ end
 defmodule MyBot.Handlers.Start do
   @moduledoc false
 
-  use GenServer
   use BotEx.Handlers.ModuleHandler
   use BotEx.Handlers.ModuleInit
 
