@@ -42,6 +42,7 @@ defmodule BotEx.Handlers.ModuleHandler do
       end
 
       @impl true
+      @spec handle_message(Message.t(), any()) :: any() | no_return()
       def handle_message(_a, _b) do
         raise(BehaviourError, message: "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!")
       end
