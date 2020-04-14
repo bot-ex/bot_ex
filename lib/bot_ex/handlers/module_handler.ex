@@ -5,15 +5,15 @@ defmodule BotEx.Handlers.ModuleHandler do
 
   defmacro __using__(_opts) do
     quote do
+      use GenServer
+
       @behaviour BotEx.Behaviours.Handler
 
       alias BotEx.Models.Message
       alias BotEx.Helpers.UserActions
       alias BotEx.Exceptions.BehaviourError
 
-      @doc """
-      Returns a command is responsible for module processing
-      """
+      @impl true
       @spec get_cmd_name() :: any()
       def get_cmd_name() do
         raise(BehaviourError, message: "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!")
@@ -33,7 +33,7 @@ defmodule BotEx.Handlers.ModuleHandler do
       - msg: incoming `BotEx.Models.Message` message
       - state: current state
       """
-      @spec handle_cast(msg :: Message.t(), state :: any()) :: {:noreply, any()}
+      @spec handle_cast(Message.t(), any()) :: {:noreply, any()}
       def handle_cast(msg, state) do
         new_state = handle_message(msg, state)
 
@@ -41,13 +41,8 @@ defmodule BotEx.Handlers.ModuleHandler do
         {:noreply, new_state}
       end
 
-      @doc """
-      Message handler
-      ## Parameters
-      - msg: incoming `BotEx.Models.Message` message.
-      - state: current state
-      return new state
-      """
+      @impl true
+      @spec(Message.t(), any())
       def handle_message(_a, _b) do
         raise(BehaviourError, message: "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!")
       end
@@ -56,12 +51,7 @@ defmodule BotEx.Handlers.ModuleHandler do
         GenServer.start_link(__MODULE__, [])
       end
 
-      @doc """
-      Send message to the worker
-      ## Parameters
-      - info: message `BotEx.Models.Message` for sending
-      return `BotEx.Models.Message`
-      """
+      @impl true
       @spec send_message(Message.t()) :: Message.t()
       def send_message(info) do
         :poolboy.checkout(__MODULE__) |> GenServer.cast(info)

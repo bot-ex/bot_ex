@@ -106,7 +106,7 @@ defmodule MyBot.Updaters.MySource do
 
   use GenServer
 
-  alias MyBot.Middleware.Handler
+  alias BotEx.Routing.Handler
 
   def child_spec(opts) do
     %{
