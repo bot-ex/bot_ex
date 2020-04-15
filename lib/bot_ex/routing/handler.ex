@@ -1,10 +1,11 @@
-defmodule BotEx.Middleware.Handler do
+defmodule BotEx.Routing.Handler do
   use GenServer
   require Logger
 
   alias BotEx.Models.Message
   alias BotEx.Behaviours.{MiddlewareParser, Middleware}
-  alias BotEx.{Router, Config}
+  alias BotEx.Config
+  alias BotEx.Routing.Router
   alias BotEx.Helpers.Tools
   alias BotEx.Exceptions.BehaviourError
 

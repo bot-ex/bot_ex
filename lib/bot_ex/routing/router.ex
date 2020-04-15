@@ -1,4 +1,4 @@
-defmodule BotEx.Router do
+defmodule BotEx.Routing.Router do
   alias BotEx.Models.Message
 
   require Logger

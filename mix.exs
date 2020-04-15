@@ -4,13 +4,18 @@ defmodule BotEx.Mixfile do
   def project do
     [
       app: :bot_ex,
-      version: "0.1.0",
+      description: "Bot development core for Elixir",
+      version: "0.2.0",
       elixir: "~> 1.9",
       elixirc_paths: elixirc_paths(Mix.env),
       compilers: [:gettext] ++ Mix.compilers,
       start_permanent: Mix.env == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      package: [
+        licenses: "MIT",
+        homepage_url: "https://github.com/bot-ex"
+      ]
     ]
   end
 

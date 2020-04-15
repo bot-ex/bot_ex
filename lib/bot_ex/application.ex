@@ -10,7 +10,7 @@ defmodule BotEx.Application do
   def start(_type, _args) do
     children = [
       BotEx.PoolSup,
-      BotEx.Middleware.Handler,
+      BotEx.Routing.Handler,
       BotEx.Updaters.LogRotate
     ]
 
