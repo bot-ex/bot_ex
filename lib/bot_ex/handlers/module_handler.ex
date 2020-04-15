@@ -5,7 +5,6 @@ defmodule BotEx.Handlers.ModuleHandler do
 
   defmacro __using__(_opts) do
     quote do
-      use GenServer
 
       @behaviour BotEx.Behaviours.Handler
 
@@ -13,6 +12,9 @@ defmodule BotEx.Handlers.ModuleHandler do
       alias BotEx.Helpers.UserActions
       alias BotEx.Exceptions.BehaviourError
 
+      @doc """
+      Returns a command is responsible for module processing
+      """
       @impl true
       @spec get_cmd_name() :: any()
       def get_cmd_name() do
@@ -33,6 +35,7 @@ defmodule BotEx.Handlers.ModuleHandler do
       - msg: incoming `BotEx.Models.Message` message
       - state: current state
       """
+
       @spec handle_cast(Message.t(), any()) :: {:noreply, any()}
       def handle_cast(msg, state) do
         new_state = handle_message(msg, state)
