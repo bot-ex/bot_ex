@@ -5,20 +5,31 @@ defmodule BotEx.Routing.Router do
   alias BotEx.Config
 
   @doc """
-  Send message to handler.
+  Send messages to handlers.
   ## Parameters:
-  - msg: `BotEx.Models.Message` message
+  - msgs: list of `BotEx.Models.Message`
   """
-  @spec send_to_handler(Message.t()) :: Message.t()
-  def send_to_handler(%Message{module: m, from: bot} = msg) do
-    routes = Map.get(get_routes(), bot)
+  @spec send_to_handler([Message.t(), ...] | Message.t()) :: [Message.t(), ...]
+  def send_to_handler(msgs) when is_list(msgs) do
+    msgs
+    |> Enum.group_by(fn %Message{user_id: user} -> user end)
+    |> Enum.each(&handle_msgs/1)
+  end
 
-    unless is_nil(routes[m]) do
-      routes[m].send_message(msg)
-    else
-      Logger.error("No route found for \"#{m}\"\nAvailable routes:\n#{inspect(routes)}")
-      msg
-    end
+  @deprecated "use send_to_handler/1 with the first argument as a list of messages"
+  def send_to_handler(%Message{user_id: user_id} = msg), do: handle_msgs({user_id, [msg]})
+
+  defp handle_msgs({_user_id, msgs}) do
+    Enum.map(msgs, fn %Message{module: m, from: bot} = msg ->
+      routes = Map.get(get_routes(), bot)
+
+      unless is_nil(routes[m]) do
+        routes[m].send_message(msg)
+      else
+        Logger.error("No route found for \"#{m}\"\nAvailable routes:\n#{inspect(routes)}")
+        msg
+      end
+    end)
   end
 
   # return list of routes

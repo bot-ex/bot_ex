@@ -5,7 +5,6 @@ defmodule BotEx.Handlers.ModuleHandler do
 
   defmacro __using__(_opts) do
     quote do
-
       @behaviour BotEx.Behaviours.Handler
 
       alias BotEx.Models.Message
@@ -18,7 +17,9 @@ defmodule BotEx.Handlers.ModuleHandler do
       @impl true
       @spec get_cmd_name() :: any()
       def get_cmd_name() do
-        raise(BehaviourError, message: "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!")
+        raise(BehaviourError,
+          message: "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!"
+        )
       end
 
       def child_spec(opts) do
@@ -35,7 +36,6 @@ defmodule BotEx.Handlers.ModuleHandler do
       - msg: incoming `BotEx.Models.Message` message
       - state: current state
       """
-
       @spec handle_cast(Message.t(), any()) :: {:noreply, any()}
       def handle_cast(msg, state) do
         new_state = handle_message(msg, state)
@@ -47,7 +47,9 @@ defmodule BotEx.Handlers.ModuleHandler do
       @impl true
       @spec handle_message(Message.t(), any()) :: any() | no_return()
       def handle_message(_a, _b) do
-        raise(BehaviourError, message: "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!")
+        raise(BehaviourError,
+          message: "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!"
+        )
       end
 
       def start_link(_) do
