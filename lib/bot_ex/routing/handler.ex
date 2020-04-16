@@ -15,18 +15,15 @@ defmodule BotEx.Routing.Handler do
     State for `BotEx.Routing.Handler`
     ## Fields:
     - `middlware`: list all possible middlware
-    - `buffer_time`: time for buffering messages
-    - `buffer`: buffering messages
+    - `message_buffer`: buffering messages
     """
     @type t() :: %__MODULE__{
             middlware: list(),
-            buffer_time: integer(),
-            buffer: list()
+            message_buffer: list()
           }
 
     defstruct middlware: [],
-              buffer_time: nil,
-              buffer: []
+              message_buffer: []
   end
 
   @doc """
@@ -43,10 +40,21 @@ defmodule BotEx.Routing.Handler do
       Config.get(:middlware)
       |> check_middleware!()
 
-    buffer_time = Config.get(:buffer_time)
-    Process.send_after(self(), :flush_buffer, buffer_time)
+    handlers = Config.get(:handlers)
+    plan_buffers_flush(handlers, Config.get(:default_buffer_time))
 
-    {:ok, %State{middlware: middlware, buffer_time: buffer_time}}
+    buffers =
+      Enum.reduce(handlers, %{}, fn {bot, hs}, acc ->
+        Map.put(
+          acc,
+          bot,
+          Enum.reduce(hs, %{}, fn h, acc2 ->
+            Map.put(acc2, elem(h, 0).get_cmd_name(), [])
+          end)
+        )
+      end)
+
+    {:ok, %State{middlware: middlware, message_buffer: buffers}}
   end
 
   def child_spec(opts) do
@@ -70,7 +78,10 @@ defmodule BotEx.Routing.Handler do
   - state: current state
   """
   @spec handle_cast({atom(), list()} | :flush_buffer, State.t()) :: {:noreply, State.t()}
-  def handle_cast({key, list}, %State{middlware: all_middlware, buffer: old_buffer} = state) do
+  def handle_cast(
+        {key, list},
+        %State{middlware: all_middlware, message_buffer: old_buffer} = state
+      ) do
     [parser | middlware] = Keyword.get(all_middlware, key)
 
     full_middlware =
@@ -80,24 +91,51 @@ defmodule BotEx.Routing.Handler do
         middlware
       end
 
-    handled =
-      Enum.map(list, fn msg ->
-        parser.transform(msg)
-        |> call_middlware(full_middlware)
+    new_buffer =
+      Enum.reduce(list, old_buffer, fn msg, acc ->
+        %Message{from: bot, module: handler} =
+          handled =
+          parser.transform(msg)
+          |> call_middlware(full_middlware)
+
+        update_in(acc, [bot, handler], fn old_msg -> Enum.concat(old_msg, [handled]) end)
       end)
 
-    {:noreply, %State{state | buffer: Enum.concat(old_buffer, handled)}}
+    {:noreply, %State{state | message_buffer: new_buffer}}
   end
 
   @doc """
   Fluhs messages to handlers
   """
-  def handle_cast(:flush_buffer, %State{buffer: buffer, buffer_time: buffer_time} = state) do
-    buffer |> Router.send_to_handler()
-    Process.send_after(self(), :flush_buffer, buffer_time)
+  def handle_info({:flush_buffer, bot, handler}, %State{message_buffer: buffer} = state) do
+    get_in(buffer, [bot, handler])
+    |> Router.send_to_handler()
 
-    {:noreply, %State{state | buffer: []}}
+    Config.get(:handlers)[bot]
+    |> Enum.filter(fn h -> elem(h, 0).get_cmd_name() == handler end)
+    |> hd()
+    |> plan_buffer_flush(bot, Config.get(:default_buffer_time))
+
+    {:noreply, %State{state | message_buffer: update_in(buffer, [bot, handler], fn _ -> [] end)}}
   end
+
+  def handle_info(_, state) do
+    {:noreply, state}
+  end
+
+  defp plan_buffers_flush(handlers, default_buffer_time) do
+    Enum.each(handlers, fn {bot, hs} ->
+      Enum.each(hs, fn
+        h -> plan_buffer_flush(h, bot, default_buffer_time)
+      end)
+    end)
+  end
+
+  defp plan_buffer_flush({h, _cnt}, bot, default_buffer_time),
+    do: Process.send_after(self(), {:flush_buffer, bot, h.get_cmd_name()}, default_buffer_time)
+
+  defp plan_buffer_flush({h, _cnt, time}, bot, _default_buffer_time),
+    do: Process.send_after(self(), {:flush_buffer, bot, h.get_cmd_name()}, time)
 
   # apply middleware modules to one message
   @spec call_middlware(Message.t(), list()) :: Message.t()

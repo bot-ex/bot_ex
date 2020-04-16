@@ -27,7 +27,7 @@
     menu_path: "config/menu.exs",
     routes_path: "config/routes.exs",
     short_map_path: "config/short_map.exs",
-    buffer_time: 3000,
+    default_buffer_time: 3000,
     after_start: [],
     show_msg_log: true,
     analytic_key: nil,
@@ -52,7 +52,7 @@ touch config/menu.exs
     ],
     handlers: [
       my_bot: [
-        {MyBot.Handlers.Start, 1} # {модуль, количество процессов в пуле}
+        {MyBot.Handlers.Start, 1, 1000} # {модуль, количество процессов в пуле, время буферизации сообщений}
       ]
     ],
     bots: [:my_bot]

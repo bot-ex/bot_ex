@@ -36,12 +36,10 @@ defmodule BotEx.Handlers.ModuleHandler do
       - msg: incoming `BotEx.Models.Message` message
       - state: current state
       """
-      @spec handle_cast(Message.t(), any()) :: {:noreply, any()}
-      def handle_cast(msg, state) do
+      @spec handle_call(Message.t(), reference(), any()) :: {:noreply, any()}
+      def handle_call(msg, _from, state) do
         new_state = handle_message(msg, state)
-
-        :poolboy.checkin(__MODULE__, self())
-        {:noreply, new_state}
+        {:reply, :ok, new_state}
       end
 
       @impl true
@@ -58,10 +56,16 @@ defmodule BotEx.Handlers.ModuleHandler do
 
       @impl true
       @spec send_message(Message.t()) :: Message.t()
-      def send_message(info) do
-        :poolboy.checkout(__MODULE__) |> GenServer.cast(info)
+      def send_message(msgs) do
+        Task.async(fn ->
+          :poolboy.transaction(__MODULE__, fn pid ->
+            Enum.each(msgs, fn msg ->
+              GenServer.call(pid, msg)
+            end)
+          end)
+        end)
 
-        info
+        msgs
       end
 
       @doc """

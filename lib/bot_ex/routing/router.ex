@@ -12,24 +12,24 @@ defmodule BotEx.Routing.Router do
   @spec send_to_handler([Message.t(), ...] | Message.t()) :: [Message.t(), ...]
   def send_to_handler(msgs) when is_list(msgs) do
     msgs
-    |> Enum.group_by(fn %Message{user_id: user} -> user end)
+    |> Enum.group_by(fn %Message{user_id: user, module: module, from: bot} ->
+      {user, module, bot}
+    end)
     |> Enum.each(&handle_msgs/1)
   end
 
   @deprecated "use send_to_handler/1 with the first argument as a list of messages"
   def send_to_handler(%Message{user_id: user_id} = msg), do: handle_msgs({user_id, [msg]})
 
-  defp handle_msgs({_user_id, msgs}) do
-    Enum.map(msgs, fn %Message{module: m, from: bot} = msg ->
-      routes = Map.get(get_routes(), bot)
+  defp handle_msgs({{_user_id, m, bot}, msgs}) do
+    routes = Map.get(get_routes(), bot)
 
-      unless is_nil(routes[m]) do
-        routes[m].send_message(msg)
-      else
-        Logger.error("No route found for \"#{m}\"\nAvailable routes:\n#{inspect(routes)}")
-        msg
-      end
-    end)
+    unless is_nil(routes[m]) do
+      routes[m].send_message(msgs)
+    else
+      Logger.error("No route found for \"#{m}\"\nAvailable routes:\n#{inspect(routes)}")
+      msgs
+    end
   end
 
   # return list of routes
@@ -47,8 +47,12 @@ defmodule BotEx.Routing.Router do
         Map.put(
           acc,
           bot,
-          Enum.reduce(hs, %{}, fn {h, _cnt}, acc ->
-            Map.put(acc, h.get_cmd_name(), h)
+          Enum.reduce(hs, %{}, fn
+            {h, _cnt}, acc ->
+              Map.put(acc, h.get_cmd_name(), h)
+
+            {h, _cnt, _b_t}, acc ->
+              Map.put(acc, h.get_cmd_name(), h)
           end)
         )
       end)
