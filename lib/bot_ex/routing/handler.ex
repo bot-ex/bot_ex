@@ -40,22 +40,10 @@ defmodule BotEx.Routing.Handler do
       Config.get(:middlware)
       |> check_middleware!()
 
-    handlers = Config.get(:handlers)
-    schedule_flush_all(handlers, Config.get(:default_buffer_time))
-
-    # create from existings handlers buffers structure
     buffers =
-      Enum.reduce(handlers, %{}, fn {bot, hs}, acc ->
-        # for each bot handler create structure like
-        # %{bot_name: %{"module_cmd" => []}}
-        Map.put(
-          acc,
-          bot,
-          Enum.reduce(hs, %{}, fn h, acc2 ->
-            Map.put(acc2, elem(h, 0).get_cmd_name(), [])
-          end)
-        )
-      end)
+      Config.get(:handlers)
+      |> schedule_flush_all(Config.get(:default_buffer_time))
+      |> create_buffers()
 
     {:ok, %State{middlware: middlware, message_buffer: buffers}}
   end
@@ -124,22 +112,44 @@ defmodule BotEx.Routing.Handler do
     {:noreply, state}
   end
 
+  # create from existings handlers buffers structure
+  @spec create_buffers(map()) :: map()
+  defp create_buffers(handlers) do
+    Enum.reduce(handlers, %{}, fn {bot, hs}, acc ->
+      # for each bot handler create structure like
+      # %{bot_name: %{"module_cmd" => []}}
+      Map.put(
+        acc,
+        bot,
+        Enum.reduce(hs, %{}, fn h, acc2 ->
+          Map.put(acc2, elem(h, 0).get_cmd_name(), [])
+        end)
+      )
+    end)
+  end
+
   @spec update_buffer(Message.t(), map()) :: map()
   defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer),
     do: update_in(old_buffer, [bot, handler], fn old_msgs -> Enum.concat(old_msgs, [msg]) end)
 
   # scheduling flush all buffers
-  @spec schedule_flush_all(list(), integer()) :: :ok
+  @spec schedule_flush_all(map(), integer()) :: map()
   defp schedule_flush_all(handlers, default_buffer_time) do
     Enum.each(handlers, fn {bot, hs} ->
       Enum.each(hs, fn
         h -> schedule_buffer_flush(h, bot, default_buffer_time)
       end)
     end)
+
+    handlers
   end
 
   # single buffer flush planning
-  @spec schedule_buffer_flush({atom(), integer()} | {atom(), integer(), integer()}, atom(), integer()) ::
+  @spec schedule_buffer_flush(
+          {atom(), integer()} | {atom(), integer(), integer()},
+          atom(),
+          integer()
+        ) ::
           reference()
   defp schedule_buffer_flush({h, cnt}, bot, default_buffer_time),
     do: schedule_buffer_flush({h, cnt, default_buffer_time}, bot, default_buffer_time)
