@@ -25,11 +25,28 @@ defmodule BotEx.Routing.Router do
     routes = Map.get(get_routes(), bot)
 
     unless is_nil(routes[m]) do
-      routes[m].send_message(msgs)
+      send_message(routes[m], msgs)
     else
       Logger.error("No route found for \"#{m}\"\nAvailable routes:\n#{inspect(routes)}")
       msgs
     end
+  end
+
+  # Send message to the worker
+  # ## Parameters
+  # - info: message `BotEx.Models.Message` for sending
+  # return `BotEx.Models.Message`
+  @spec send_message(atom(), [Message.t(), ...]) :: [Message.t(), ...]
+  defp send_message(module, msgs) do
+    Task.async(fn ->
+      :poolboy.transaction(module, fn pid ->
+        Enum.each(msgs, fn msg ->
+          GenServer.call(pid, msg)
+        end)
+      end)
+    end)
+
+    msgs
   end
 
   # return list of routes

@@ -54,20 +54,6 @@ defmodule BotEx.Handlers.ModuleHandler do
         GenServer.start_link(__MODULE__, [])
       end
 
-      @impl true
-      @spec send_message(Message.t()) :: Message.t()
-      def send_message(msgs) do
-        Task.async(fn ->
-          :poolboy.transaction(__MODULE__, fn pid ->
-            Enum.each(msgs, fn msg ->
-              GenServer.call(pid, msg)
-            end)
-          end)
-        end)
-
-        msgs
-      end
-
       @doc """
       Changes the current message handler
       ## Parameters
