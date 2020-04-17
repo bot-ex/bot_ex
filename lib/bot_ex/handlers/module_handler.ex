@@ -5,18 +5,21 @@ defmodule BotEx.Handlers.ModuleHandler do
 
   defmacro __using__(_opts) do
     quote do
-      use GenServer
-
       @behaviour BotEx.Behaviours.Handler
 
       alias BotEx.Models.Message
       alias BotEx.Helpers.UserActions
       alias BotEx.Exceptions.BehaviourError
 
+      @doc """
+      Returns a command is responsible for module processing
+      """
       @impl true
       @spec get_cmd_name() :: any()
       def get_cmd_name() do
-        raise(BehaviourError, message: "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!")
+        raise(BehaviourError,
+          message: "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!"
+        )
       end
 
       def child_spec(opts) do
@@ -33,30 +36,22 @@ defmodule BotEx.Handlers.ModuleHandler do
       - msg: incoming `BotEx.Models.Message` message
       - state: current state
       """
-      @spec handle_cast(Message.t(), any()) :: {:noreply, any()}
-      def handle_cast(msg, state) do
+      @spec handle_call(Message.t(), reference(), any()) :: {:noreply, any()}
+      def handle_call(msg, _from, state) do
         new_state = handle_message(msg, state)
-
-        :poolboy.checkin(__MODULE__, self())
-        {:noreply, new_state}
+        {:reply, :ok, new_state}
       end
 
       @impl true
       @spec handle_message(Message.t(), any()) :: any() | no_return()
       def handle_message(_a, _b) do
-        raise(BehaviourError, message: "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!")
+        raise(BehaviourError,
+          message: "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!"
+        )
       end
 
       def start_link(_) do
         GenServer.start_link(__MODULE__, [])
-      end
-
-      @impl true
-      @spec send_message(Message.t()) :: Message.t()
-      def send_message(info) do
-        :poolboy.checkout(__MODULE__) |> GenServer.cast(info)
-
-        info
       end
 
       @doc """

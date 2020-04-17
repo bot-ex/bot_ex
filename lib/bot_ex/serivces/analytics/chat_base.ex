@@ -1,4 +1,4 @@
-defmodule BotEx.Services.Analytic.ChatBase do
+defmodule BotEx.Services.Analytics.ChatBase do
   @moduledoc """
   Analytics Gathering Module
   """

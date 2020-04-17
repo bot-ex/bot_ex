@@ -6,14 +6,6 @@ defmodule BotEx.Behaviours.Handler do
   alias BotEx.Models.Message
 
   @doc """
-  Send message to the worker
-  ## Parameters
-  - info: message `BotEx.Models.Message` for sending
-  return `BotEx.Models.Message`
-  """
-  @callback send_message(msg :: Message.t) :: Message.t()
-
-  @doc """
   Returns a command is responsible for module processing
   """
   @callback get_cmd_name() :: any() | no_return()

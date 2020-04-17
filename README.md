@@ -27,6 +27,7 @@ The core is built using three key concepts:
     menu_path: "config/menu.exs",
     routes_path: "config/routes.exs",
     short_map_path: "config/short_map.exs",
+    default_buffer_time: 3000,
     after_start: [],
     show_msg_log: true,
     analytic_key: nil,
@@ -49,7 +50,7 @@ touch config/menu.exs
     ],
     handlers: [
       my_bot: [
-        {MyBot.Handlers.Start, 1} # {module, count worker processes in pool}
+        {MyBot.Handlers.Start, 1, 1000} # {module, count worker processes in pool, buffering time}
       ]
     ],
     bots: [:my_bot]

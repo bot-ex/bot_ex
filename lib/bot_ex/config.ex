@@ -24,6 +24,7 @@ defmodule BotEx.Config do
     menu_path: "config/menu.exs",
     routes_path: "config/routes.exs",
     short_map_path: "config/short_map.exs",
+    default_buffer_time: 3000,
     after_start: [],
     show_msg_log: true,
     analytic_key: nil,
