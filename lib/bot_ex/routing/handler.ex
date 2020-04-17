@@ -41,7 +41,7 @@ defmodule BotEx.Routing.Handler do
       |> check_middleware!()
 
     handlers = Config.get(:handlers)
-    plan_flush(handlers, Config.get(:default_buffer_time))
+    schedule_flush_all(handlers, Config.get(:default_buffer_time))
 
     # create from existings handlers buffers structure
     buffers =
@@ -96,15 +96,10 @@ defmodule BotEx.Routing.Handler do
 
     new_buffer =
       Enum.reduce(msg_list, old_buffer, fn msg, acc ->
-        # apply middleware to message
-        handled =
-          parser.transform(msg)
-          |> call_middlware(full_middlware)
-
-        %Message{from: bot, module: handler} = handled
-
-        # add message to current buffer
-        update_in(acc, [bot, handler], fn old_msg -> Enum.concat(old_msg, [handled]) end)
+        # apply middleware to message and update buuffer
+        parser.transform(msg)
+        |> call_middlware(full_middlware)
+        |> update_buffer(acc)
       end)
 
     {:noreply, %State{state | message_buffer: new_buffer}}
@@ -120,7 +115,7 @@ defmodule BotEx.Routing.Handler do
     Config.get(:handlers)[bot]
     |> Enum.filter(fn h -> elem(h, 0).get_cmd_name() == handler end)
     |> hd()
-    |> plan_buffer_flush(bot, Config.get(:default_buffer_time))
+    |> schedule_buffer_flush(bot, Config.get(:default_buffer_time))
 
     {:noreply, %State{state | message_buffer: update_in(buffer, [bot, handler], fn _ -> [] end)}}
   end
@@ -129,23 +124,27 @@ defmodule BotEx.Routing.Handler do
     {:noreply, state}
   end
 
+  @spec update_buffer(Message.t(), map()) :: map()
+  defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer),
+    do: update_in(old_buffer, [bot, handler], fn old_msgs -> Enum.concat(old_msgs, [msg]) end)
+
   # scheduling flush all buffers
-  @spec plan_flush(list(), integer()) :: :ok
-  defp plan_flush(handlers, default_buffer_time) do
+  @spec schedule_flush_all(list(), integer()) :: :ok
+  defp schedule_flush_all(handlers, default_buffer_time) do
     Enum.each(handlers, fn {bot, hs} ->
       Enum.each(hs, fn
-        h -> plan_buffer_flush(h, bot, default_buffer_time)
+        h -> schedule_buffer_flush(h, bot, default_buffer_time)
       end)
     end)
   end
 
   # single buffer flush planning
-  @spec plan_buffer_flush({atom(), integer()} | {atom(), integer(), integer()}, atom(), integer()) ::
+  @spec schedule_buffer_flush({atom(), integer()} | {atom(), integer(), integer()}, atom(), integer()) ::
           reference()
-  defp plan_buffer_flush({h, cnt}, bot, default_buffer_time),
-    do: plan_buffer_flush({h, cnt, default_buffer_time}, bot, default_buffer_time)
+  defp schedule_buffer_flush({h, cnt}, bot, default_buffer_time),
+    do: schedule_buffer_flush({h, cnt, default_buffer_time}, bot, default_buffer_time)
 
-  defp plan_buffer_flush({h, _cnt, time}, bot, _default_buffer_time),
+  defp schedule_buffer_flush({h, _cnt, time}, bot, _default_buffer_time),
     do: Process.send_after(self(), {:flush_buffer, bot, h.get_cmd_name()}, time)
 
   # apply middleware modules to one message
