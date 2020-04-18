@@ -23,7 +23,6 @@ defmodule BotEx.Config do
   @defaults [
     menu_path: "config/menu.exs",
     routes_path: "config/routes.exs",
-    short_map_path: "config/short_map.exs",
     default_buffer_time: 3000,
     after_start: [],
     show_msg_log: true,
@@ -45,8 +44,13 @@ defmodule BotEx.Config do
   @doc """
   Return config value by name
   """
-  @spec get(atom()) :: any
-  def get(parameter) do
-    :persistent_term.get({:bot_ex_settings, parameter, :config})
+  @spec get(atom()) :: any()
+  def get(param_key) do
+    :persistent_term.get({:bot_ex_settings, param_key, :config})
+  end
+
+  @spec put(atom(), any()) :: any()
+  def put(param_key, value) do
+    :persistent_term.put({:bot_ex_settings, param_key, :config}, value)
   end
 end
