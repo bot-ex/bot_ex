@@ -49,8 +49,28 @@ defmodule BotEx.Config do
     :persistent_term.get({:bot_ex_settings, param_key, :config})
   end
 
-  @spec put(atom(), any()) :: any()
+  @doc """
+    use with aware! it can be a bit slower. For test mostly
+  """
+  @spec put_unsafe(atom(), any()) :: any()
   def put(param_key, value) do
     :persistent_term.put({:bot_ex_settings, param_key, :config}, value)
+  end
+
+  @spec put_new!(atom(), any()) :: any()
+  def put_once!(param_key, value, default) do
+    if is_update?(param_key, value, default) do
+      raise "you are trying to replace an existing value! in storage: #{inspect(current)}\n
+      your value: #{inspect(value)}"
+    end
+
+    :persistent_term.put({:bot_ex_settings, param_key, :config}, value)
+  end
+  
+  defp is_update?(param_key, value, default) do
+    
+    current = :persistent_term.get({:bot_ex_settings, param_key, :config})
+    
+    current != default and current != value 
   end
 end
