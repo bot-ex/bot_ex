@@ -38,7 +38,7 @@ defmodule BotEx.Handlers.ModuleHandler do
 
       @spec handle_cast(Message.t(), any()) :: {:noreply, any()}
       def handle_cast(msg, state) do
-        new_state = handle_message(msg, state)
+        {_, new_state} = handle_message(msg, state)
 
         :poolboy.checkin(__MODULE__, self())
         {:noreply, new_state}
