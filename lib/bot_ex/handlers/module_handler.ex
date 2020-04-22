@@ -38,7 +38,8 @@ defmodule BotEx.Handlers.ModuleHandler do
       """
       @spec handle_call(Message.t(), reference(), any()) :: {:noreply, any()}
       def handle_call(msg, _from, state) do
-        new_state = handle_message(msg, state)
+        {_, new_state} = handle_message(msg, state)
+
         {:reply, :ok, new_state}
       end
 
