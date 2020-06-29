@@ -22,32 +22,11 @@ defmodule BotEx.Handlers.ModuleHandler do
         )
       end
 
-      def child_spec(opts) do
-        %{
-          id: __MODULE__,
-          start: {__MODULE__, :start_link, [opts]},
-          type: :worker
-        }
-      end
-
-      @doc """
-      Asynchronous message handler
-      ## Parameters
-      - msg: incoming `BotEx.Models.Message` message
-      - state: current state
-      """
-      @spec handle_call(Message.t(), reference(), any()) :: {:noreply, any()}
-      def handle_call(msg, _from, state) do
-        {_, new_state} = handle_message(msg, state)
-
-        {:reply, :ok, new_state}
-      end
-
       @impl true
-      @spec handle_message(Message.t(), any()) :: any() | no_return()
-      def handle_message(_a, _b) do
+      @spec handle_message(Message.t()) :: any() | no_return()
+      def handle_message(_a) do
         raise(BehaviourError,
-          message: "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!"
+          message: "Behaviour function #{__MODULE__}.handle_message/1 is not implemented!"
         )
       end
 
@@ -81,7 +60,7 @@ defmodule BotEx.Handlers.ModuleHandler do
         UserActions.update_last_call(u_id, n_t_msg)
       end
 
-      defoverridable handle_message: 2
+      defoverridable handle_message: 1
       defoverridable get_cmd_name: 0
     end
   end

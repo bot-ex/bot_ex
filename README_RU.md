@@ -200,13 +200,12 @@ defmodule MyBot.Handlers.Start do
   ## Параметры
 
   - `Message`: обработанное сообщение от бота
-  - `state`: текущее состояние процесса
   """
-  @spec handle_message(Message.t(), State.t()) :: {:noreply, State.t()}
-  def handle_message(%Message{chat_id: ch_id}, state) do
+  @spec handle_message(Message.t()) :: any()
+  def handle_message(%Message{chat_id: ch_id}) do
     MyBotApi.send_message(ch_id, "Hello")
 
-    {:noreply, state}
+    nil
   end
 end
 

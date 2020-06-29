@@ -9,6 +9,7 @@ defmodule BotEx.Routing.Handler do
   alias BotEx.Helpers.Tools
   alias BotEx.Exceptions.BehaviourError
   alias BotEx.Middleware.LastCallUpdater
+  import BotEx.Helpers.Debug, only: [print_debug: 1]
 
   defmodule State do
     @typedoc """
@@ -75,20 +76,9 @@ defmodule BotEx.Routing.Handler do
       ) do
     [parser | middlware] = Keyword.get(all_middlware, bot_key)
 
-    full_middlware =
-      unless LastCallUpdater in middlware do
-        middlware ++ [LastCallUpdater]
-      else
-        middlware
-      end
-
     new_buffer =
-      Enum.reduce(msg_list, old_buffer, fn msg, acc ->
-        # apply middleware to message and update buuffer
-        parser.transform(msg)
-        |> call_middlware(full_middlware)
-        |> update_buffer(acc)
-      end)
+      add_last_call_updater(middlware)
+      |> update_buffers_from_messages(msg_list, old_buffer, parser)
 
     {:noreply, %State{state | message_buffer: new_buffer}}
   end
@@ -101,7 +91,17 @@ defmodule BotEx.Routing.Handler do
     |> Router.send_to_handler()
 
     Config.get(:handlers)[bot]
-    |> Enum.filter(fn h -> elem(h, 0).get_cmd_name() == handler end)
+    |> Enum.filter(fn
+      {h, _time} ->
+        h.get_cmd_name() == handler
+
+      h when is_atom(h) ->
+        h.get_cmd_name() == handler
+
+      e ->
+        Logger.warn("Unsupported type #{inspect(e)}")
+        false
+    end)
     |> hd()
     |> schedule_buffer_flush(bot, Config.get(:default_buffer_time))
 
@@ -112,50 +112,67 @@ defmodule BotEx.Routing.Handler do
     {:noreply, state}
   end
 
+  defp add_last_call_updater(middlware) do
+    unless LastCallUpdater in middlware do
+      middlware ++ [LastCallUpdater]
+    else
+      middlware
+    end
+  end
+
+  defp update_buffers_from_messages(full_middlware, msg_list, old_buffer, parser) do
+    Enum.reduce(msg_list, old_buffer, fn msg, acc ->
+      # apply middleware to message and update buffer
+      parser.transform(msg)
+      |> call_middlware(full_middlware)
+      |> update_buffer(acc)
+    end)
+  end
+
   # create from existings handlers buffers structure
   @spec create_buffers(map()) :: map()
   defp create_buffers(handlers) do
     Enum.reduce(handlers, %{}, fn {bot, hs}, acc ->
       # for each bot handler create structure like
       # %{bot_name: %{"module_cmd" => []}}
-      Map.put(
-        acc,
-        bot,
-        Enum.reduce(hs, %{}, fn h, acc2 ->
-          Map.put(acc2, elem(h, 0).get_cmd_name(), [])
-        end)
-      )
+      Map.put(acc, bot, Enum.reduce(hs, %{}, &put_handler_in_buffer/2))
     end)
+  end
+
+  defp put_handler_in_buffer({h, _time}, acc), do: Map.put(acc, h.get_cmd_name(), [])
+
+  defp put_handler_in_buffer(h, acc) when is_atom(h), do: Map.put(acc, h.get_cmd_name(), [])
+
+  defp put_handler_in_buffer(h, acc) do
+    Logger.warn("Unsupported type #{inspect(h)}")
+    acc
   end
 
   @spec update_buffer(Message.t(), map()) :: map()
   defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer),
-    do: update_in(old_buffer, [bot, handler], fn old_msgs -> Enum.concat(old_msgs, [msg]) end)
+    do:
+      update_in(old_buffer, [bot, handler], fn old_msgs ->
+        print_debug("Add message to buffer. Bot: #{bot} handler: #{handler}")
+        Enum.concat(old_msgs, [msg])
+      end)
 
   # scheduling flush all buffers
   @spec schedule_flush_all(map(), integer()) :: map()
   defp schedule_flush_all(handlers, default_buffer_time) do
     Enum.each(handlers, fn {bot, hs} ->
-      Enum.each(hs, fn
-        h -> schedule_buffer_flush(h, bot, default_buffer_time)
-      end)
+      Enum.each(hs, &schedule_buffer_flush(&1, bot, default_buffer_time))
     end)
 
     handlers
   end
 
   # single buffer flush planning
-  @spec schedule_buffer_flush(
-          {atom(), integer()} | {atom(), integer(), integer()},
-          atom(),
-          integer()
-        ) ::
-          reference()
-  defp schedule_buffer_flush({h, cnt}, bot, default_buffer_time),
-    do: schedule_buffer_flush({h, cnt, default_buffer_time}, bot, default_buffer_time)
-
-  defp schedule_buffer_flush({h, _cnt, time}, bot, _default_buffer_time),
+  @spec schedule_buffer_flush({atom(), integer()} | map(), atom(), integer()) :: reference()
+  defp schedule_buffer_flush({h, time}, bot, _default_buffer_time),
     do: Process.send_after(self(), {:flush_buffer, bot, h.get_cmd_name()}, time)
+
+  defp schedule_buffer_flush(h, bot, default_buffer_time) when is_atom(h),
+    do: schedule_buffer_flush({h, default_buffer_time}, bot, default_buffer_time)
 
   # apply middleware modules to one message
   @spec call_middlware(Message.t(), list()) :: Message.t()

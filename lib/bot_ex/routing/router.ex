@@ -3,6 +3,7 @@ defmodule BotEx.Routing.Router do
 
   require Logger
   alias BotEx.Config
+  import BotEx.Helpers.Debug, only: [print_debug: 1]
 
   @doc """
   Send messages to handlers.
@@ -38,11 +39,11 @@ defmodule BotEx.Routing.Router do
   # return `BotEx.Models.Message`
   @spec send_message(atom(), [Message.t(), ...]) :: [Message.t(), ...]
   defp send_message(module, msgs) do
+    print_debug("Send messages to #{module}")
+
     Task.async(fn ->
-      :poolboy.transaction(module, fn pid ->
-        Enum.each(msgs, fn msg ->
-          GenServer.call(pid, msg)
-        end)
+      Enum.each(msgs, fn msg ->
+        module.handle_message(msg)
       end)
     end)
 
@@ -60,18 +61,9 @@ defmodule BotEx.Routing.Router do
   # load routes from file
   defp load_routes() do
     base_routes =
-      Enum.reduce(Config.get(:handlers), %{}, fn {bot, hs}, acc ->
-        Map.put(
-          acc,
-          bot,
-          Enum.reduce(hs, %{}, fn
-            {h, _cnt}, acc ->
-              Map.put(acc, h.get_cmd_name(), h)
-
-            {h, _cnt, _b_t}, acc ->
-              Map.put(acc, h.get_cmd_name(), h)
-          end)
-        )
+      Config.get(:handlers)
+      |> Enum.reduce(%{}, fn {bot, hs}, acc ->
+        Map.put(acc, bot, Enum.reduce(hs, %{}, &put_route/2))
       end)
 
     path = Config.get(:routes_path)
@@ -87,5 +79,13 @@ defmodule BotEx.Routing.Router do
     :persistent_term.put({:bot_ex_settings, :routes, :config}, full_routes)
 
     full_routes
+  end
+
+  defp put_route({h, _b_t}, acc), do: Map.put(acc, h.get_cmd_name(), h)
+  defp put_route(h, acc) when is_atom(h), do: Map.put(acc, h.get_cmd_name(), h)
+
+  defp put_route(error, acc) do
+    Logger.error("Not supported definition #{inspect(error)}")
+    acc
   end
 end

@@ -45,7 +45,6 @@ defmodule BotEx.Mixfile do
       {:gen_worker, "~> 0.0.5"},
       {:earmark, "~> 1.4", only: :dev},
       {:ex_doc, "~> 0.21", only: :dev},
-      {:poolboy, "~> 1.5.2"},
       {:deep_merge, "~> 1.0"},
       {:jason, "~> 1.1"},
       {:httpoison, "~> 1.6"}

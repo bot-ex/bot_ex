@@ -17,5 +17,5 @@ defmodule BotEx.Behaviours.Handler do
   - state: current state
   return new state
   """
-  @callback handle_message(Message.t(), any()) :: any() | no_return()
+  @callback handle_message(Message.t()) :: any() | no_return()
 end
