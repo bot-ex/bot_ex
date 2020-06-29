@@ -30,10 +30,6 @@ defmodule BotEx.Handlers.ModuleHandler do
         )
       end
 
-      def start_link(_) do
-        GenServer.start_link(__MODULE__, [])
-      end
-
       @doc """
       Changes the current message handler
       ## Parameters
