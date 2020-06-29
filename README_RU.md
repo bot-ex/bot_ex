@@ -51,7 +51,7 @@ touch config/menu.exs
     ],
     handlers: [
       my_bot: [
-        {MyBot.Handlers.Start, 1, 1000} # {модуль, количество процессов в пуле, время буферизации сообщений}
+        {MyBot.Handlers.Start, 1000} # {модуль, время буферизации сообщений}
       ]
     ],
     bots: [:my_bot]
@@ -84,17 +84,6 @@ touch config/menu.exs
 %{
   :my_bot:
     %{"s" => MyBot.Handlers.Start}
-}
-```
-Также вы можете создать файл `short_map.exs` который содержит текстовые алиасы для команд
-
-### Example `short_map.exs`
-```elixir
-%{
-  :my_bot:
-  %{
-    "i" => {MyBot.Handlers.Start.get_cmd_name(), "some action"}
-  }
 }
 ```
 

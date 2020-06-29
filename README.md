@@ -49,7 +49,7 @@ touch config/menu.exs
     ],
     handlers: [
       my_bot: [
-        {MyBot.Handlers.Start, 1, 1000} # {module, count worker processes in pool, buffering time}
+        {MyBot.Handlers.Start, 1000} # {module, buffering time}
       ]
     ],
     bots: [:my_bot]
@@ -82,17 +82,6 @@ Optionally you can create file `routes.exs` and redefine or add aliases for your
 %{
   :my_bot:
     %{"s" => MyBot.Handlers.Start}
-}
-```
-Also you can create file `short_map.exs` that contains text aliases for command
-
-### Example `short_map.exs`
-```elixir
-%{
-  :my_bot:
-  %{
-    "i" => {MyBot.Handlers.Start.get_cmd_name(), "some action"}
-  }
 }
 ```
 
