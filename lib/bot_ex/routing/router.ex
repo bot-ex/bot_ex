@@ -10,7 +10,7 @@ defmodule BotEx.Routing.Router do
   ## Parameters:
   - msgs: list of `BotEx.Models.Message`
   """
-  @spec send_to_handler([Message.t(), ...] | Message.t()) :: [Message.t(), ...]
+  @spec send_to_handler([Message.t(), ...]) :: :ok
   def send_to_handler(msgs) when is_list(msgs) do
     msgs
     |> Enum.group_by(fn %Message{user_id: user, module: module, from: bot} ->
@@ -19,9 +19,7 @@ defmodule BotEx.Routing.Router do
     |> Enum.each(&handle_msgs/1)
   end
 
-  @deprecated "use send_to_handler/1 with the first argument as a list of messages"
-  def send_to_handler(%Message{user_id: user_id} = msg), do: handle_msgs({user_id, [msg]})
-
+  @spec handle_msgs({{integer(), module(), atom()}, [Message.t(), ...]}) :: nil
   defp handle_msgs({{_user_id, m, bot}, msgs}) do
     routes = Map.get(get_routes(), bot)
 
@@ -31,6 +29,8 @@ defmodule BotEx.Routing.Router do
       Logger.error("No route found for \"#{m}\"\nAvailable routes:\n#{inspect(routes)}")
       msgs
     end
+
+    nil
   end
 
   # Send message to the worker
@@ -51,6 +51,7 @@ defmodule BotEx.Routing.Router do
   end
 
   # return list of routes
+  @spec get_routes() :: map()
   defp get_routes() do
     case :persistent_term.get({:bot_ex_settings, :routes, :config}, []) do
       [] -> load_routes()
@@ -59,6 +60,7 @@ defmodule BotEx.Routing.Router do
   end
 
   # load routes from file
+  @spec load_routes() :: map()
   defp load_routes() do
     base_routes =
       Config.get(:handlers)
@@ -81,6 +83,7 @@ defmodule BotEx.Routing.Router do
     full_routes
   end
 
+  @spec put_route({module(), integer()} | module() | any(), map()) :: map()
   defp put_route({h, _b_t}, acc), do: Map.put(acc, h.get_cmd_name(), h)
   defp put_route(h, acc) when is_atom(h), do: Map.put(acc, h.get_cmd_name(), h)
 

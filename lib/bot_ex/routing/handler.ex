@@ -40,6 +40,7 @@ defmodule BotEx.Routing.Handler do
     middlware =
       Config.get(:middlware)
       |> check_middleware!()
+      |> add_last_call_updater()
 
     buffers =
       Config.get(:handlers)
@@ -74,11 +75,10 @@ defmodule BotEx.Routing.Handler do
         {bot_key, msg_list},
         %State{middlware: all_middlware, message_buffer: old_buffer} = state
       ) do
-    [parser | middlware] = Keyword.get(all_middlware, bot_key)
 
     new_buffer =
-      add_last_call_updater(middlware)
-      |> update_buffers_from_messages(msg_list, old_buffer, parser)
+      Keyword.get(all_middlware, bot_key)
+      |> update_buffers_from_messages(msg_list, old_buffer)
 
     {:noreply, %State{state | message_buffer: new_buffer}}
   end
@@ -86,23 +86,12 @@ defmodule BotEx.Routing.Handler do
   @doc """
   Fluhs messages to handlers
   """
+  @spec handle_info({:flush_buffer, atom(), String.t() | any()}, State.t()) :: {:noreply, State.t()}
   def handle_info({:flush_buffer, bot, handler}, %State{message_buffer: buffer} = state) do
     get_in(buffer, [bot, handler])
     |> Router.send_to_handler()
 
-    Config.get(:handlers)[bot]
-    |> Enum.filter(fn
-      {h, _time} ->
-        h.get_cmd_name() == handler
-
-      h when is_atom(h) ->
-        h.get_cmd_name() == handler
-
-      e ->
-        Logger.warn("Unsupported type #{inspect(e)}")
-        false
-    end)
-    |> hd()
+    find_handler_by_name(bot, handler)
     |> schedule_buffer_flush(bot, Config.get(:default_buffer_time))
 
     {:noreply, %State{state | message_buffer: update_in(buffer, [bot, handler], fn _ -> [] end)}}
@@ -112,6 +101,24 @@ defmodule BotEx.Routing.Handler do
     {:noreply, state}
   end
 
+  @spec find_handler_by_name(atom(), String.t()) :: module()
+  defp find_handler_by_name(bot, name) do
+    Config.get(:handlers)[bot]
+    |> Enum.filter(fn
+      {h, _time} ->
+        h.get_cmd_name() == name
+
+      h when is_atom(h) ->
+        h.get_cmd_name() == name
+
+      e ->
+        Logger.warn("Unsupported type #{inspect(e)}")
+        false
+    end)
+    |> hd()
+  end
+
+  @spec add_last_call_updater(list()) :: list()
   defp add_last_call_updater(middlware) do
     unless LastCallUpdater in middlware do
       middlware ++ [LastCallUpdater]
@@ -120,11 +127,12 @@ defmodule BotEx.Routing.Handler do
     end
   end
 
-  defp update_buffers_from_messages(full_middlware, msg_list, old_buffer, parser) do
+  @spec update_buffers_from_messages(list(), [Message.t(), ...], map()) :: map()
+  defp update_buffers_from_messages([parser | middlware], msg_list, old_buffer) do
     Enum.reduce(msg_list, old_buffer, fn msg, acc ->
       # apply middleware to message and update buffer
       parser.transform(msg)
-      |> call_middlware(full_middlware)
+      |> call_middlware(middlware)
       |> update_buffer(acc)
     end)
   end
@@ -139,6 +147,7 @@ defmodule BotEx.Routing.Handler do
     end)
   end
 
+  @spec put_handler_in_buffer({atom(), integer()} | atom() | any(), map()) :: map()
   defp put_handler_in_buffer({h, _time}, acc), do: Map.put(acc, h.get_cmd_name(), [])
 
   defp put_handler_in_buffer(h, acc) when is_atom(h), do: Map.put(acc, h.get_cmd_name(), [])
@@ -167,7 +176,7 @@ defmodule BotEx.Routing.Handler do
   end
 
   # single buffer flush planning
-  @spec schedule_buffer_flush({atom(), integer()} | map(), atom(), integer()) :: reference()
+  @spec schedule_buffer_flush({atom(), integer()} | atom(), atom(), integer()) :: reference()
   defp schedule_buffer_flush({h, time}, bot, _default_buffer_time),
     do: Process.send_after(self(), {:flush_buffer, bot, h.get_cmd_name()}, time)
 
@@ -184,7 +193,7 @@ defmodule BotEx.Routing.Handler do
   end
 
   # check middlware modules
-  @spec check_middleware!(list()) :: list()
+  @spec check_middleware!(list()) :: list() | no_return()
   defp check_middleware!([]) do
     Logger.warn("No middlware was set")
     []
