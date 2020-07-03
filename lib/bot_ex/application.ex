@@ -13,7 +13,7 @@ defmodule BotEx.Application do
     Config.init()
 
     opts = [strategy: :one_for_one, name: BotEx.Supervisor]
-    {:ok, pid} = Supervisor.start_link([BotEx.Routing.Handler], opts)
+    {:ok, pid} = Supervisor.start_link([BotEx.Routing.MessageHandler], opts)
 
     run_hooks()
 

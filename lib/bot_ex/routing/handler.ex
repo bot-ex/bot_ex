@@ -1,53 +1,67 @@
-defmodule BotEx.Routing.Handler do
+defmodule BotEx.Routing.MessageHandler do
   use GenServer
   require Logger
 
-  alias BotEx.Models.Message
-  alias BotEx.Behaviours.{MiddlewareParser, Middleware}
   alias BotEx.Config
   alias BotEx.Routing.Router
+  alias BotEx.Core.Middleware
   alias BotEx.Helpers.Tools
-  alias BotEx.Exceptions.BehaviourError
-  alias BotEx.Middleware.LastCallUpdater
-  import BotEx.Helpers.Debug, only: [print_debug: 1]
+  alias BotEx.Behaviours.BufferingStrategy
 
   defmodule State do
     @typedoc """
-    State for `BotEx.Routing.Handler`
+    State for `BotEx.Routing.MessageHandler`
     ## Fields:
-    - `middlware`: list all possible middlware
+    - `middleware`: list all possible middleware
     - `message_buffer`: buffering messages
+    - `default_buffering_time`: time buffering messages
+    - `buffering_strategy`: strategy for buffering messages. Must implements `BotEx.Behaviours.BufferingStrategy`
     """
     @type t() :: %__MODULE__{
-            middlware: list(),
-            message_buffer: map()
+            middleware: list(),
+            message_buffer: map(),
+            default_buffering_time: integer(),
+            default_buffering_time: module()
           }
 
-    defstruct middlware: [],
-              message_buffer: %{}
+    defstruct middleware: [],
+              message_buffer: %{},
+              default_buffering_time: nil,
+              buffering_strategy: nil
   end
 
   @doc """
   Apply middleware modules to messages
   """
   @spec handle(any, any) :: :ok
-  def handle(list, type) do
-    GenServer.cast(__MODULE__, {type, list})
+  def handle(msg_list, bot_key) do
+    GenServer.cast(__MODULE__, {bot_key, msg_list})
   end
 
   @spec init(any) :: {:ok, State.t()}
   def init(_args) do
-    middlware =
-      Config.get(:middlware)
-      |> check_middleware!()
-      |> add_last_call_updater()
+    middleware =
+      Config.get(:middleware)
+      |> Middleware.check_middleware!()
+
+    default_buffering_time = Config.get(:default_buffering_time)
+
+    buffering_strategy =
+      Config.get(:buffering_strategy)
+      |> Tools.check_behaviours!(BufferingStrategy)
 
     buffers =
       Config.get(:handlers)
-      |> schedule_flush_all(Config.get(:default_buffer_time))
-      |> create_buffers()
+      |> buffering_strategy.schedule_flush_all(default_buffering_time, self())
+      |> buffering_strategy.create_buffers()
 
-    {:ok, %State{middlware: middlware, message_buffer: buffers}}
+    {:ok,
+     %State{
+       middleware: middleware,
+       message_buffer: buffers,
+       default_buffering_time: default_buffering_time,
+       buffering_strategy: buffering_strategy
+     }}
   end
 
   def child_spec(opts) do
@@ -70,15 +84,19 @@ defmodule BotEx.Routing.Handler do
   list - list incoming `BotEx.Models.Message` messages
   - state: current state
   """
-  @spec handle_cast({atom(), list()} | :flush_buffer, State.t()) :: {:noreply, State.t()}
+  @spec handle_cast({atom(), list()}, State.t()) :: {:noreply, State.t()}
   def handle_cast(
         {bot_key, msg_list},
-        %State{middlware: all_middlware, message_buffer: old_buffer} = state
+        %State{
+          middleware: all_middleware,
+          message_buffer: old_buffer,
+          buffering_strategy: buffering_strategy
+        } = state
       ) do
-
     new_buffer =
-      Keyword.get(all_middlware, bot_key)
-      |> update_buffers_from_messages(msg_list, old_buffer)
+      Keyword.get(all_middleware, bot_key)
+      |> Middleware.apply_to_messages(msg_list)
+      |> buffering_strategy.update_buffers_from_messages(old_buffer)
 
     {:noreply, %State{state | message_buffer: new_buffer}}
   end
@@ -86,136 +104,21 @@ defmodule BotEx.Routing.Handler do
   @doc """
   Fluhs messages to handlers
   """
-  @spec handle_info({:flush_buffer, atom(), String.t() | any()}, State.t()) :: {:noreply, State.t()}
-  def handle_info({:flush_buffer, bot, handler}, %State{message_buffer: buffer} = state) do
-    get_in(buffer, [bot, handler])
+  @spec handle_info({:flush_buffer, any()}, State.t()) ::
+          {:noreply, State.t()}
+  def handle_info(
+        {:flush_buffer, key},
+        %State{
+          message_buffer: buffer,
+          default_buffering_time: default_buffering_time,
+          buffering_strategy: buffering_strategy
+        } = state
+      ) do
+    buffering_strategy.get_messages(buffer, key)
     |> Router.send_to_handler()
 
-    find_handler_by_name(bot, handler)
-    |> schedule_buffer_flush(bot, Config.get(:default_buffer_time))
+    buffering_strategy.schedule_buffer_flush(key, default_buffering_time, self())
 
-    {:noreply, %State{state | message_buffer: update_in(buffer, [bot, handler], fn _ -> [] end)}}
-  end
-
-  def handle_info(_, state) do
-    {:noreply, state}
-  end
-
-  @spec find_handler_by_name(atom(), String.t()) :: module()
-  defp find_handler_by_name(bot, name) do
-    Config.get(:handlers)[bot]
-    |> Enum.filter(fn
-      {h, _time} ->
-        h.get_cmd_name() == name
-
-      h when is_atom(h) ->
-        h.get_cmd_name() == name
-
-      e ->
-        Logger.warn("Unsupported type #{inspect(e)}")
-        false
-    end)
-    |> hd()
-  end
-
-  @spec add_last_call_updater(list()) :: list()
-  defp add_last_call_updater(middlware) do
-    unless LastCallUpdater in middlware do
-      middlware ++ [LastCallUpdater]
-    else
-      middlware
-    end
-  end
-
-  @spec update_buffers_from_messages(list(), [Message.t(), ...], map()) :: map()
-  defp update_buffers_from_messages([parser | middlware], msg_list, old_buffer) do
-    Enum.reduce(msg_list, old_buffer, fn msg, acc ->
-      # apply middleware to message and update buffer
-      parser.transform(msg)
-      |> call_middlware(middlware)
-      |> update_buffer(acc)
-    end)
-  end
-
-  # create from existings handlers buffers structure
-  @spec create_buffers(map()) :: map()
-  defp create_buffers(handlers) do
-    Enum.reduce(handlers, %{}, fn {bot, hs}, acc ->
-      # for each bot handler create structure like
-      # %{bot_name: %{"module_cmd" => []}}
-      Map.put(acc, bot, Enum.reduce(hs, %{}, &put_handler_in_buffer/2))
-    end)
-  end
-
-  @spec put_handler_in_buffer({atom(), integer()} | atom() | any(), map()) :: map()
-  defp put_handler_in_buffer({h, _time}, acc), do: Map.put(acc, h.get_cmd_name(), [])
-
-  defp put_handler_in_buffer(h, acc) when is_atom(h), do: Map.put(acc, h.get_cmd_name(), [])
-
-  defp put_handler_in_buffer(h, acc) do
-    Logger.warn("Unsupported type #{inspect(h)}")
-    acc
-  end
-
-  @spec update_buffer(Message.t(), map()) :: map()
-  defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer),
-    do:
-      update_in(old_buffer, [bot, handler], fn old_msgs ->
-        print_debug("Add message to buffer. Bot: #{bot} handler: #{handler}")
-        Enum.concat(old_msgs, [msg])
-      end)
-
-  # scheduling flush all buffers
-  @spec schedule_flush_all(map(), integer()) :: map()
-  defp schedule_flush_all(handlers, default_buffer_time) do
-    Enum.each(handlers, fn {bot, hs} ->
-      Enum.each(hs, &schedule_buffer_flush(&1, bot, default_buffer_time))
-    end)
-
-    handlers
-  end
-
-  # single buffer flush planning
-  @spec schedule_buffer_flush({atom(), integer()} | atom(), atom(), integer()) :: reference()
-  defp schedule_buffer_flush({h, time}, bot, _default_buffer_time),
-    do: Process.send_after(self(), {:flush_buffer, bot, h.get_cmd_name()}, time)
-
-  defp schedule_buffer_flush(h, bot, default_buffer_time) when is_atom(h),
-    do: schedule_buffer_flush({h, default_buffer_time}, bot, default_buffer_time)
-
-  # apply middleware modules to one message
-  @spec call_middlware(Message.t(), list()) :: Message.t()
-  defp call_middlware(%Message{} = msg, []), do: msg
-
-  defp call_middlware(%Message{} = msg, [module | rest]) do
-    module.transform(msg)
-    |> call_middlware(rest)
-  end
-
-  # check middlware modules
-  @spec check_middleware!(list()) :: list() | no_return()
-  defp check_middleware!([]) do
-    Logger.warn("No middlware was set")
-    []
-  end
-
-  defp check_middleware!(all) do
-    Enum.each(all, fn {_, [parser | middlware]} ->
-      unless Tools.is_behaviours?(parser, MiddlewareParser),
-        do:
-          raise(BehaviourError,
-            message: "#{parser} must implement behavior BotEx.Behaviours.MiddlewareParser"
-          )
-
-      Enum.each(middlware, fn module ->
-        unless Tools.is_behaviours?(module, Middleware),
-          do:
-            raise(BehaviourError,
-              message: "#{module} must implement behavior BotEx.Behaviours.Middleware"
-            )
-      end)
-    end)
-
-    all
+    {:noreply, %State{state | message_buffer: buffering_strategy.reset_buffer(buffer, key)}}
   end
 end

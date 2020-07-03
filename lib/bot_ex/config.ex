@@ -1,11 +1,13 @@
 defmodule BotEx.Config do
+  alias BotEx.Core.Messages.DefaultBufferingStrategy
+
   @moduledoc """
   Configurations module
 
   # Example:
   ```elixir
   config :bot_ex,
-    middlware: [
+    middleware: [
       my_bot: [
         MyBot.Middleware.MessageTransformer,
         MyBot.Middleware.Auth
@@ -23,11 +25,12 @@ defmodule BotEx.Config do
   @defaults [
     menu_path: "config/menu.exs",
     routes_path: "config/routes.exs",
-    default_buffer_time: 3000,
+    default_buffering_time: 3000,
+    buffering_strategy: DefaultBufferingStrategy,
     after_start: [],
     show_msg_log: true,
     analytic_key: nil,
-    middlware: [],
+    middleware: [],
     bots: [],
     handlers: []
   ]

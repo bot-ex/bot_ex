@@ -41,7 +41,7 @@ defmodule BotEx.Routing.Router do
   defp send_message(module, msgs) do
     print_debug("Send messages to #{module}")
 
-    Task.async(fn ->
+    Task.start_link(fn ->
       Enum.each(msgs, fn msg ->
         module.handle_message(msg)
       end)

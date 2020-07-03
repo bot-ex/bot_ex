@@ -4,6 +4,7 @@ defmodule BotEx.Helpers.Tools do
   """
 
   alias BotEx.Exceptions.ConfigError
+  alias BotEx.Exceptions.BehaviourError
 
   @doc """
   Checks the behavior is implemented by module
@@ -17,6 +18,16 @@ defmodule BotEx.Helpers.Tools do
     |> Keyword.get_values(:behaviour)
     |> List.flatten()
     |> Enum.member?(behaviour)
+  end
+
+  @spec check_behaviours!(atom() | %{module_info: nil | keyword() | map()}, any()) ::
+          module() | no_return()
+  def check_behaviours!(module, behaviour) do
+    unless is_behaviours?(module, behaviour) do
+      raise(BehaviourError, message: "Module #{module} must implement behaviour #{behaviour}")
+    end
+
+    module
   end
 
   @doc """
