@@ -1,8 +1,8 @@
+# coveralls-ignore-start
 defmodule BotEx.Behaviours.BufferingStrategy do
   @moduledoc """
   The behaviour for a module that implements a message buffering strategy
   """
-
   alias BotEx.Models.Message
 
   @doc """
@@ -86,3 +86,5 @@ defmodule BotEx.Behaviours.BufferingStrategy do
   """
   @callback reset_buffer(buffer :: map(), key :: any()) :: map()
 end
+
+# coveralls-ignore-stop

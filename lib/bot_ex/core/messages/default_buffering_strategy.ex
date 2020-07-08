@@ -71,17 +71,24 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
 
   defp put_handler_in_buffer(h, acc) when is_atom(h), do: Map.put(acc, h.get_cmd_name(), [])
 
+  # coveralls-ignore-start
   defp put_handler_in_buffer(h, acc) do
     Logger.warn("Unsupported type #{inspect(h)}")
     acc
   end
 
+  # coveralls-ignore-stop
+
   @spec update_buffer(Message.t(), map()) :: map()
   defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer),
     do:
-      update_in(old_buffer, [bot, handler], fn old_msgs ->
-        print_debug("Add message to buffer. Bot: #{bot} handler: #{handler}")
-        Enum.concat(old_msgs, [msg])
+      update_in(old_buffer, [bot, handler], fn
+        old_msgs when is_list(old_msgs) ->
+          print_debug("Add message to buffer. Bot: #{bot} handler: #{handler}")
+          Enum.concat(old_msgs, [msg])
+
+        error ->
+          Logger.warn("Can not add message to \"#{error}\" buffer")
       end)
 
   @spec find_handler_by_name(atom(), String.t()) :: module()
@@ -94,9 +101,11 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
       h when is_atom(h) ->
         h.get_cmd_name() == name
 
+      # coveralls-ignore-start
       e ->
         Logger.warn("Unsupported type #{inspect(e)}")
         false
+        # coveralls-ignore-stop
     end)
     |> hd()
   end

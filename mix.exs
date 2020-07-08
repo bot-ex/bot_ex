@@ -7,11 +7,18 @@ defmodule BotEx.Mixfile do
       description: "Bot development core for Elixir",
       version: "1.0.0",
       elixir: "~> 1.9",
-      elixirc_paths: elixirc_paths(Mix.env),
-      compilers: [:gettext] ++ Mix.compilers,
-      start_permanent: Mix.env == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: [:gettext] ++ Mix.compilers(),
+      start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
       package: [
         licenses: "MIT",
         homepage_url: "https://github.com/bot-ex"
@@ -30,8 +37,8 @@ defmodule BotEx.Mixfile do
   end
 
   # Specifies which paths to compile per environment.
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_),     do: ["lib"]
+  defp elixirc_paths(:test), do: ["lib", "test/support", "test/test_bot"]
+  defp elixirc_paths(_), do: ["lib"]
 
   # Specifies your project dependencies.
   #
@@ -47,7 +54,8 @@ defmodule BotEx.Mixfile do
       {:ex_doc, "~> 0.21", only: :dev},
       {:deep_merge, "~> 1.0"},
       {:jason, "~> 1.1"},
-      {:httpoison, "~> 1.6"}
+      {:httpoison, "~> 1.6"},
+      {:excoveralls, "~> 0.10", only: :test}
     ]
   end
 
@@ -59,7 +67,7 @@ defmodule BotEx.Mixfile do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      test: ["test"]
+      test: ["test --no-start"]
     ]
   end
 end

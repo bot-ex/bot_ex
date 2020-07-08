@@ -15,7 +15,7 @@ defmodule BotEx.Config do
     ],
     handlers: [
       my_bot: [
-        {MyBot.Handlers.Start, 1} # {module, count worker processes in pool}
+        {MyBot.Handlers.Start, 1000} # {module, bufering time}
       ]
     ],
     bots: [:my_bot]

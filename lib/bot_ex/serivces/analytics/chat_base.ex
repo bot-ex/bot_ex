@@ -2,7 +2,7 @@ defmodule BotEx.Services.Analytics.ChatBase do
   @moduledoc """
   Analytics Gathering Module
   """
-
+  # coveralls-ignore-start
   require Logger
 
   alias BotEx.Config
@@ -63,4 +63,6 @@ defmodule BotEx.Services.Analytics.ChatBase do
       )
     end
   end
+
+  # coveralls-ignore-stop
 end

@@ -83,7 +83,7 @@ touch config/menu.exs
 ### Example `routes.exs`
 ```elixir
 %{
-  :my_bot:
+  my_bot:
     %{"s" => MyBot.Handlers.Start}
 }
 ```
@@ -178,8 +178,6 @@ defmodule MyBot.Handlers.Start do
   @moduledoc false
 
   use BotEx.Handlers.ModuleHandler
-  use BotEx.Handlers.ModuleInit
-
   alias BotEx.Models.Message
 
   def get_cmd_name, do: "start"

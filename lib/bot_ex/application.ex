@@ -24,9 +24,11 @@ defmodule BotEx.Application do
     Config.get(:after_start)
     |> Enum.each(fn hook ->
       unless Tools.is_behaviours?(hook, Hook) do
+        # coveralls-ignore-start
         raise(BehaviourError,
           message: "Module #{hook} must implement behaviour BotEx.Behaviours.Hook"
         )
+        # coveralls-ignore-stop
       end
 
       hook.run()

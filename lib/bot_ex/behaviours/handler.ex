@@ -2,7 +2,7 @@ defmodule BotEx.Behaviours.Handler do
   @moduledoc """
   Basic behaviour for the Handler module
   """
-
+  # coveralls-ignore-start
   alias BotEx.Models.Message
 
   @doc """
@@ -18,4 +18,5 @@ defmodule BotEx.Behaviours.Handler do
   return new state
   """
   @callback handle_message(Message.t()) :: any() | no_return()
+  # coveralls-ignore-stop
 end

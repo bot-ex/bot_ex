@@ -26,8 +26,10 @@ defmodule BotEx.Routing.Router do
     unless is_nil(routes[m]) do
       send_message(routes[m], msgs)
     else
+      # coveralls-ignore-start
       Logger.error("No route found for \"#{m}\"\nAvailable routes:\n#{inspect(routes)}")
       msgs
+      # coveralls-ignore-stop
     end
 
     nil
@@ -88,7 +90,9 @@ defmodule BotEx.Routing.Router do
   defp put_route(h, acc) when is_atom(h), do: Map.put(acc, h.get_cmd_name(), h)
 
   defp put_route(error, acc) do
+    # coveralls-ignore-start
     Logger.error("Not supported definition #{inspect(error)}")
     acc
+    # coveralls-ignore-stop
   end
 end

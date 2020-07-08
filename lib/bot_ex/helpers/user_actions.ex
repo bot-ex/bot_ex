@@ -25,6 +25,7 @@ defmodule BotEx.Helpers.UserActions do
   - user_id: user id
   - call: `BotEx.Models.Message` for saving
   """
-  @spec update_last_call(user_id :: integer(), call :: Message.t()) :: :true
+  @spec update_last_call(user_id :: integer() | binary(), call :: Message.t()) :: :true
+  def update_last_call(user_id, call) when is_binary(user_id), do: String.to_integer(user_id) |> update_last_call(call)
   def update_last_call(user_id, %Message{} = call), do: :ets.insert(:last_call, {user_id, call})
 end
