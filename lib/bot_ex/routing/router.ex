@@ -32,21 +32,6 @@ defmodule BotEx.Routing.Router do
     nil
   end
 
-  # defp handle_msgs({{_user_id, m, bot}, msgs}) do
-  #   routes = Map.get(get_routes(), bot)
-
-  #   unless is_nil(routes[m]) do
-  #     send_message(routes[m], msgs)
-  #   else
-  #     # coveralls-ignore-start
-  #     Logger.error("No route found for \"#{m}\"\nAvailable routes:\n#{inspect(routes)}")
-  #     msgs
-  #     # coveralls-ignore-stop
-  #   end
-
-  #   nil
-  # end
-
   # Send message to the worker
   # ## Parameters
   # - info: message `BotEx.Models.Message` for sending
