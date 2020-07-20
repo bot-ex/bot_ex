@@ -1,5 +1,6 @@
 defmodule BotEx.Config do
   alias BotEx.Core.Messages.DefaultBufferingStrategy
+  alias BotEx.Core.Messages.DefaultGroupingStrategy
 
   @moduledoc """
   Configurations module
@@ -27,6 +28,7 @@ defmodule BotEx.Config do
     routes_path: "config/routes.exs",
     default_buffering_time: 3000,
     buffering_strategy: DefaultBufferingStrategy,
+    grouping_strategy: DefaultGroupingStrategy,
     after_start: [],
     show_msg_log: true,
     analytic_key: nil,

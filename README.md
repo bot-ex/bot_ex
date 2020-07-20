@@ -24,15 +24,27 @@ The core is built using three key concepts:
  #full available config reference
  #this values set to default
  config :bot_ex,
+    #path to file with config for menu buttons
     menu_path: "config/menu.exs",
+    #path to file with routes aliases config
     routes_path: "config/routes.exs",
+    #default time for buffering message
     default_buffering_time: 3000,
+    #default buffering strategy
     buffering_strategy: BotEx.Core.Messages.DefaultBufferingStrategy,
+    #default grouping strategy
+    grouping_strategy: BotEx.Core.Messages.DefaultGroupingStrategy,
+    #hooks that will be run after application start
     after_start: [],
+    #show debug messages
     show_msg_log: true,
+    #key for chat base bot analytics service
     analytic_key: nil,
+    #middleware list for bots messages
     middleware: [],
-    handlers: [],
+    #handlers list for bots messages
+    handlers:[],
+    #bots list
     bots: []
   ```
 

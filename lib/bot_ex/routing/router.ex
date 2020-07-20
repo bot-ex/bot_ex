@@ -12,15 +12,12 @@ defmodule BotEx.Routing.Router do
   """
   @spec send_to_handler([Message.t(), ...]) :: :ok
   def send_to_handler(msgs) when is_list(msgs) do
-    msgs
-    |> Enum.group_by(fn %Message{user_id: user, module: module, from: bot} ->
-      {user, module, bot}
-    end)
-    |> Enum.each(&handle_msgs/1)
+    grouping_strategy = Config.get(:grouping_strategy)
+    grouping_strategy.group_and_send(msgs)
   end
 
-  @spec handle_msgs({{integer(), module(), atom()}, [Message.t(), ...]}) :: nil
-  defp handle_msgs({{_user_id, m, bot}, msgs}) do
+  @spec handle_msgs(module(), atom(), [Message.t(), ...]) :: nil
+  def handle_msgs(m, bot, msgs) do
     routes = Map.get(get_routes(), bot)
 
     unless is_nil(routes[m]) do
@@ -34,6 +31,21 @@ defmodule BotEx.Routing.Router do
 
     nil
   end
+
+  # defp handle_msgs({{_user_id, m, bot}, msgs}) do
+  #   routes = Map.get(get_routes(), bot)
+
+  #   unless is_nil(routes[m]) do
+  #     send_message(routes[m], msgs)
+  #   else
+  #     # coveralls-ignore-start
+  #     Logger.error("No route found for \"#{m}\"\nAvailable routes:\n#{inspect(routes)}")
+  #     msgs
+  #     # coveralls-ignore-stop
+  #   end
+
+  #   nil
+  # end
 
   # Send message to the worker
   # ## Parameters

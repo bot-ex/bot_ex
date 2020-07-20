@@ -12,6 +12,9 @@ defmodule BotEx.Application do
 
     Config.init()
 
+    Config.get(:grouping_strategy)
+    |> Tools.is_behaviours?(BotEx.Behaviours.GroupingStrategy)
+
     opts = [strategy: :one_for_one, name: BotEx.Supervisor]
     {:ok, pid} = Supervisor.start_link([BotEx.Routing.MessageHandler], opts)
 

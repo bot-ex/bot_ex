@@ -24,15 +24,27 @@
  #full available config reference
  #this values set to default
  config :bot_ex,
+    #путь к файлу с настройками кнопок меню
     menu_path: "config/menu.exs",
+    #путь к файлу с настройками дополнительных маршрутов
     routes_path: "config/routes.exs",
+    #время по-молчанию для буферизации сообщений
     default_buffering_time: 3000,
+    #стратегия буферизации сообщений
     buffering_strategy: BotEx.Core.Messages.DefaultBufferingStrategy,
+    #стратегия гшруппировки сообщений
+    grouping_strategy: BotEx.Core.Messages.DefaultGroupingStrategy,
+    #набор хуков для запуска после старта приложения
     after_start: [],
+    #показывать отладочную информацию
     show_msg_log: true,
+    #ключ для сервиса аналитики ботов chat base
     analytic_key: nil,
+    #список middleware для обработки сообщений от ботов
     middleware: [],
+    #список ботов
     bots: [],
+    #список обработчиков для сообщений
     handlers: []
   ```
 
