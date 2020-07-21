@@ -15,7 +15,6 @@ defmodule BotEx.Handlers.ModuleHandler do
       Returns a command is responsible for module processing
       """
       @impl true
-      @spec get_cmd_name() :: any()
       def get_cmd_name() do
         raise(BehaviourError,
           message: "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!"
@@ -23,7 +22,6 @@ defmodule BotEx.Handlers.ModuleHandler do
       end
 
       @impl true
-      @spec handle_message(Message.t()) :: any() | no_return()
       def handle_message(_a) do
         raise(BehaviourError,
           message: "Behaviour function #{__MODULE__}.handle_message/1 is not implemented!"

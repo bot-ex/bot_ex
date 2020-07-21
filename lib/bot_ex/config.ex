@@ -49,9 +49,9 @@ defmodule BotEx.Config do
   @doc """
   Return config value by name
   """
-  @spec get(atom()) :: any()
-  def get(param_key) do
-    :persistent_term.get({:bot_ex_settings, param_key, :config})
+  @spec get(atom(), any()) :: any()
+  def get(param_key, default \\ nil) do
+    :persistent_term.get({:bot_ex_settings, param_key, :config}, default)
   end
 
   @spec put(atom(), any()) :: any()

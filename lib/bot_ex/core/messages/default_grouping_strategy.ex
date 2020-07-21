@@ -8,7 +8,6 @@ defmodule BotEx.Core.Messages.DefaultGroupingStrategy do
   alias BotEx.Models.Message
   alias BotEx.Routing.Router
 
-  @spec group_and_send([Message.t(), ...]) :: :ok
   @impl true
   def group_and_send(msgs) do
     msgs

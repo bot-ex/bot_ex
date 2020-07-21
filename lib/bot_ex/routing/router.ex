@@ -52,7 +52,7 @@ defmodule BotEx.Routing.Router do
   # return list of routes
   @spec get_routes() :: map()
   defp get_routes() do
-    case :persistent_term.get({:bot_ex_settings, :routes, :config}, []) do
+    case Config.get(:routes, []) do
       [] -> load_routes()
       routes -> routes
     end
@@ -63,8 +63,8 @@ defmodule BotEx.Routing.Router do
   defp load_routes() do
     base_routes =
       Config.get(:handlers)
-      |> Enum.reduce(%{}, fn {bot, hs}, acc ->
-        Map.put(acc, bot, Enum.reduce(hs, %{}, &put_route/2))
+      |> Map.new(fn {bot, hs} ->
+        {bot, Map.new(hs, &put_route/1)}
       end)
 
     path = Config.get(:routes_path)
@@ -77,19 +77,18 @@ defmodule BotEx.Routing.Router do
         base_routes
       end
 
-    :persistent_term.put({:bot_ex_settings, :routes, :config}, full_routes)
+    Config.put(:routes, full_routes)
 
     full_routes
   end
 
-  @spec put_route({module(), integer()} | module() | any(), map()) :: map()
-  defp put_route({h, _b_t}, acc), do: Map.put(acc, h.get_cmd_name(), h)
-  defp put_route(h, acc) when is_atom(h), do: Map.put(acc, h.get_cmd_name(), h)
+  @spec put_route({module(), integer()} | module() | any()) :: tuple()
+  defp put_route({h, _b_t}), do: {h.get_cmd_name(), h}
+  defp put_route(h) when is_atom(h), do: {h.get_cmd_name(), h}
 
-  defp put_route(error, acc) do
+  defp put_route(error) do
     # coveralls-ignore-start
     Logger.error("Not supported definition #{inspect(error)}")
-    acc
     # coveralls-ignore-stop
   end
 end
