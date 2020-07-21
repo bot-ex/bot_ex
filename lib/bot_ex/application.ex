@@ -8,19 +8,18 @@ defmodule BotEx.Application do
 
   @spec start(any(), any()) :: {:error, any()} | {:ok, pid()}
   def start(_type, _args) do
-    children = [
-      BotEx.PoolSup,
-      BotEx.Routing.Handler,
-      BotEx.Updaters.LogRotate
-    ]
-
     :ets.new(:last_call, [:set, :public, :named_table])
 
     Config.init()
 
+    Config.get(:grouping_strategy)
+    |> Tools.is_behaviours?(BotEx.Behaviours.GroupingStrategy)
+
     opts = [strategy: :one_for_one, name: BotEx.Supervisor]
-    {:ok, pid} = Supervisor.start_link(children, opts)
+    {:ok, pid} = Supervisor.start_link([BotEx.Routing.MessageHandler], opts)
+
     run_hooks()
+
     {:ok, pid}
   end
 
@@ -28,7 +27,11 @@ defmodule BotEx.Application do
     Config.get(:after_start)
     |> Enum.each(fn hook ->
       unless Tools.is_behaviours?(hook, Hook) do
-        raise(BehaviourError, message: "Module #{hook} must implement behaviour BotEx.Behaviours.Hook")
+        # coveralls-ignore-start
+        raise(BehaviourError,
+          message: "Module #{hook} must implement behaviour BotEx.Behaviours.Hook"
+        )
+        # coveralls-ignore-stop
       end
 
       hook.run()

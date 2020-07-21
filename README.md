@@ -24,24 +24,34 @@ The core is built using three key concepts:
  #full available config reference
  #this values set to default
  config :bot_ex,
+    #path to file with config for menu buttons
     menu_path: "config/menu.exs",
+    #path to file with routes aliases config
     routes_path: "config/routes.exs",
-    short_map_path: "config/short_map.exs",
+    #default time for buffering message
+    default_buffering_time: 3000,
+    #default buffering strategy
+    buffering_strategy: BotEx.Core.Messages.DefaultBufferingStrategy,
+    #default grouping strategy
+    grouping_strategy: BotEx.Core.Messages.DefaultGroupingStrategy,
+    #hooks that will be run after application start
     after_start: [],
+    #show debug messages
     show_msg_log: true,
+    #key for chat base bot analytics service
     analytic_key: nil,
-    middlware: [],
-    handlers: [],
+    #middleware list for bots messages
+    middleware: [],
+    #handlers list for bots messages
+    handlers:[],
+    #bots list
     bots: []
   ```
 
-```bash
-touch config/menu.exs
-```
 ## Example `config`
 ```elixir
  config :bot_ex,
-    middlware: [
+    middleware: [
       my_bot: [
         MyBot.Middleware.MessageTransformer,
         MyBot.Middleware.Auth
@@ -49,11 +59,15 @@ touch config/menu.exs
     ],
     handlers: [
       my_bot: [
-        {MyBot.Handlers.Start, 1} # {module, count worker processes in pool}
+        {MyBot.Handlers.Start, 1000} # {module, buffering time}
       ]
     ],
     bots: [:my_bot]
   ```
+
+```bash
+touch config/menu.exs
+```
 
 ## Example `menu.exs`
 ```elixir
@@ -80,19 +94,8 @@ Optionally you can create file `routes.exs` and redefine or add aliases for your
 ### Example `routes.exs`
 ```elixir
 %{
-  :my_bot:
+  my_bot:
     %{"s" => MyBot.Handlers.Start}
-}
-```
-Also you can create file `short_map.exs` that contains text aliases for command
-
-### Example `short_map.exs`
-```elixir
-%{
-  :my_bot:
-  %{
-    "i" => {MyBot.Handlers.Start.get_cmd_name(), "some action"}
-  }
 }
 ```
 
@@ -104,7 +107,7 @@ defmodule MyBot.Updaters.MySource do
 
   use GenServer
 
-  alias BotEx.Routing.Handler
+  alias BotEx.Routing.MessageHandler
 
   def child_spec(opts) do
     %{
@@ -136,7 +139,7 @@ defmodule MyBot.Updaters.MySource do
   def handle_info(:get_updates, state) do
     # fetch any messages from your source
     msgs = []
-    Handler.handle(msgs, :my_bot)
+    MessageHandler.handle(msgs, :my_bot)
     cycle()
     {:noreply, state}
   end
@@ -187,7 +190,6 @@ defmodule MyBot.Handlers.Start do
   @moduledoc false
 
   use BotEx.Handlers.ModuleHandler
-  use BotEx.Handlers.ModuleInit
 
   alias BotEx.Models.Message
 
@@ -197,14 +199,12 @@ defmodule MyBot.Handlers.Start do
   Message handler
   ## Parameters
   - msg: incoming `BotEx.Models.Message` message.
-  - state: current state
-  return new state
   """
-  @spec handle_message(Message.t(), State.t()) :: {:noreply, State.t()}
-  def handle_message(%Message{chat_id: ch_id}, state) do
+  @spec handle_message(Message.t()) :: any()
+  def handle_message(%Message{chat_id: ch_id}) do
     MyBotApi.send_message(ch_id, "Hello")
 
-    {:noreply, state}
+    nil
   end
 end
 

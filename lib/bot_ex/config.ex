@@ -1,11 +1,14 @@
 defmodule BotEx.Config do
+  alias BotEx.Core.Messages.DefaultBufferingStrategy
+  alias BotEx.Core.Messages.DefaultGroupingStrategy
+
   @moduledoc """
   Configurations module
 
   # Example:
   ```elixir
   config :bot_ex,
-    middlware: [
+    middleware: [
       my_bot: [
         MyBot.Middleware.MessageTransformer,
         MyBot.Middleware.Auth
@@ -13,7 +16,7 @@ defmodule BotEx.Config do
     ],
     handlers: [
       my_bot: [
-        {MyBot.Handlers.Start, 1} # {module, count worker processes in pool}
+        {MyBot.Handlers.Start, 1000} # {module, bufering time}
       ]
     ],
     bots: [:my_bot]
@@ -23,11 +26,13 @@ defmodule BotEx.Config do
   @defaults [
     menu_path: "config/menu.exs",
     routes_path: "config/routes.exs",
-    short_map_path: "config/short_map.exs",
+    default_buffering_time: 3000,
+    buffering_strategy: DefaultBufferingStrategy,
+    grouping_strategy: DefaultGroupingStrategy,
     after_start: [],
     show_msg_log: true,
     analytic_key: nil,
-    middlware: [],
+    middleware: [],
     bots: [],
     handlers: []
   ]
@@ -44,8 +49,13 @@ defmodule BotEx.Config do
   @doc """
   Return config value by name
   """
-  @spec get(atom()) :: any
-  def get(parameter) do
-    :persistent_term.get({:bot_ex_settings, parameter, :config})
+  @spec get(atom()) :: any()
+  def get(param_key) do
+    :persistent_term.get({:bot_ex_settings, param_key, :config})
+  end
+
+  @spec put(atom(), any()) :: any()
+  def put(param_key, value) do
+    :persistent_term.put({:bot_ex_settings, param_key, :config}, value)
   end
 end

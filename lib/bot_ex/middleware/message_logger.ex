@@ -5,22 +5,25 @@ defmodule BotEx.Middleware.MessageLogger do
   @behaviour BotEx.Behaviours.Middleware
 
   alias BotEx.Models.Message
-  alias BotEx.Config
-
-  require Logger
+  import BotEx.Helpers.Debug, only: [print_debug: 1]
 
   @doc """
   Debug messages in terminal
   """
+  @impl true
   @spec transform(Message.t()) :: Message.t()
   def transform(%Message{} = t_msg) do
-    Config.get(:show_msg_log)
-    |> Kernel.if do
-      Logger.info(t_msg |> info_to_string)
-      Logger.info("==================================================================")
-    end
+    debug(t_msg)
 
     t_msg
+  end
+
+  defp debug(t_msg) do
+    t_msg
+    |> info_to_string
+    |> print_debug()
+
+    print_debug("==========")
   end
 
   @doc """

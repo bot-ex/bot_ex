@@ -5,7 +5,6 @@ defmodule BotEx.Handlers.ModuleHandler do
 
   defmacro __using__(_opts) do
     quote do
-
       @behaviour BotEx.Behaviours.Handler
 
       alias BotEx.Models.Message
@@ -18,48 +17,17 @@ defmodule BotEx.Handlers.ModuleHandler do
       @impl true
       @spec get_cmd_name() :: any()
       def get_cmd_name() do
-        raise(BehaviourError, message: "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!")
-      end
-
-      def child_spec(opts) do
-        %{
-          id: __MODULE__,
-          start: {__MODULE__, :start_link, [opts]},
-          type: :worker
-        }
-      end
-
-      @doc """
-      Asynchronous message handler
-      ## Parameters
-      - msg: incoming `BotEx.Models.Message` message
-      - state: current state
-      """
-
-      @spec handle_cast(Message.t(), any()) :: {:noreply, any()}
-      def handle_cast(msg, state) do
-        {_, new_state} = handle_message(msg, state)
-
-        :poolboy.checkin(__MODULE__, self())
-        {:noreply, new_state}
+        raise(BehaviourError,
+          message: "Behaviour function #{__MODULE__}.get_cmd_name/0 is not implemented!"
+        )
       end
 
       @impl true
-      @spec handle_message(Message.t(), any()) :: any() | no_return()
-      def handle_message(_a, _b) do
-        raise(BehaviourError, message: "Behaviour function #{__MODULE__}.handle_message/2 is not implemented!")
-      end
-
-      def start_link(_) do
-        GenServer.start_link(__MODULE__, [])
-      end
-
-      @impl true
-      @spec send_message(Message.t()) :: Message.t()
-      def send_message(info) do
-        :poolboy.checkout(__MODULE__) |> GenServer.cast(info)
-
-        info
+      @spec handle_message(Message.t()) :: any() | no_return()
+      def handle_message(_a) do
+        raise(BehaviourError,
+          message: "Behaviour function #{__MODULE__}.handle_message/1 is not implemented!"
+        )
       end
 
       @doc """
@@ -88,7 +56,7 @@ defmodule BotEx.Handlers.ModuleHandler do
         UserActions.update_last_call(u_id, n_t_msg)
       end
 
-      defoverridable handle_message: 2
+      defoverridable handle_message: 1
       defoverridable get_cmd_name: 0
     end
   end

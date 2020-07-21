@@ -2,16 +2,8 @@ defmodule BotEx.Behaviours.Handler do
   @moduledoc """
   Basic behaviour for the Handler module
   """
-
+  # coveralls-ignore-start
   alias BotEx.Models.Message
-
-  @doc """
-  Send message to the worker
-  ## Parameters
-  - info: message `BotEx.Models.Message` for sending
-  return `BotEx.Models.Message`
-  """
-  @callback send_message(msg :: Message.t) :: Message.t()
 
   @doc """
   Returns a command is responsible for module processing
@@ -25,5 +17,6 @@ defmodule BotEx.Behaviours.Handler do
   - state: current state
   return new state
   """
-  @callback handle_message(Message.t(), any()) :: any() | no_return()
+  @callback handle_message(Message.t()) :: any() | no_return()
+  # coveralls-ignore-stop
 end

@@ -8,7 +8,7 @@
 # Как это работает
 Ядро построено с использованием трёх ключевых концепций:
 - updaters - основная задача получить сообщение и, отправить его обработчику
-- middlware - получают сообщение и каким-либо образом трансформируют его. Первый в цепочке должен реализовывать поведение `BotEx.Behaviours.MiddlewareParser`, последующие - `BotEx.Behaviours.Middleware`
+- middleware - получают сообщение и каким-либо образом трансформируют его. Первый в цепочке должен реализовывать поведение `BotEx.Behaviours.MiddlewareParser`, последующие - `BotEx.Behaviours.Middleware`
 - handlers - обрабатывают сообщение и взаимодействуют с пользователем. Каждый обработчик должен реализовывать поведение `BotEx.Behaviours.Handler`
 
 # Быстрый старт:
@@ -24,26 +24,35 @@
  #full available config reference
  #this values set to default
  config :bot_ex,
+    #путь к файлу с настройками кнопок меню
     menu_path: "config/menu.exs",
+    #путь к файлу с настройками дополнительных маршрутов
     routes_path: "config/routes.exs",
-    short_map_path: "config/short_map.exs",
+    #время по-молчанию для буферизации сообщений
+    default_buffering_time: 3000,
+    #стратегия буферизации сообщений
+    buffering_strategy: BotEx.Core.Messages.DefaultBufferingStrategy,
+    #стратегия гшруппировки сообщений
+    grouping_strategy: BotEx.Core.Messages.DefaultGroupingStrategy,
+    #набор хуков для запуска после старта приложения
     after_start: [],
+    #показывать отладочную информацию
     show_msg_log: true,
+    #ключ для сервиса аналитики ботов chat base
     analytic_key: nil,
-    middlware: [],
+    #список middleware для обработки сообщений от ботов
+    middleware: [],
+    #список ботов
     bots: [],
+    #список обработчиков для сообщений
     handlers: []
   ```
-
-```bash
-touch config/menu.exs
-```
 
 ## Пример конфига
 
 ```elixir
  config :bot_ex,
-    middlware: [
+    middleware: [
       my_bot: [
         MyBot.Middleware.MessageTransformer,
         MyBot.Middleware.Auth
@@ -51,11 +60,15 @@ touch config/menu.exs
     ],
     handlers: [
       my_bot: [
-        {MyBot.Handlers.Start, 1} # {модуль, количество процессов в пуле}
+        {MyBot.Handlers.Start, 1000} # {модуль, время буферизации сообщений}
       ]
     ],
     bots: [:my_bot]
   ```
+
+```bash
+touch config/menu.exs
+```
 
 ## Пример `menu.exs`
 ```elixir
@@ -82,19 +95,8 @@ touch config/menu.exs
 ### Example `routes.exs`
 ```elixir
 %{
-  :my_bot:
+  my_bot:
     %{"s" => MyBot.Handlers.Start}
-}
-```
-Также вы можете создать файл `short_map.exs` который содержит текстовые алиасы для команд
-
-### Example `short_map.exs`
-```elixir
-%{
-  :my_bot:
-  %{
-    "i" => {MyBot.Handlers.Start.get_cmd_name(), "some action"}
-  }
 }
 ```
 
@@ -106,7 +108,7 @@ defmodule MyBot.Updaters.MySource do
 
   use GenServer
 
-  alias BotEx.Routing.Handler
+  alias BotEx.Routing.MessageHandler
 
   def child_spec(opts) do
     %{
@@ -138,7 +140,7 @@ defmodule MyBot.Updaters.MySource do
   def handle_info(:get_updates, state) do
     # fetch any messages from your source
     msgs = []
-    Handler.handle(msgs, :my_bot)
+    MessageHandler.handle(msgs, :my_bot)
     cycle()
     {:noreply, state}
   end
@@ -188,8 +190,6 @@ defmodule MyBot.Handlers.Start do
   @moduledoc false
 
   use BotEx.Handlers.ModuleHandler
-  use BotEx.Handlers.ModuleInit
-
   alias BotEx.Models.Message
 
   def get_cmd_name, do: "start"
@@ -200,13 +200,12 @@ defmodule MyBot.Handlers.Start do
   ## Параметры
 
   - `Message`: обработанное сообщение от бота
-  - `state`: текущее состояние процесса
   """
-  @spec handle_message(Message.t(), State.t()) :: {:noreply, State.t()}
-  def handle_message(%Message{chat_id: ch_id}, state) do
+  @spec handle_message(Message.t()) :: any()
+  def handle_message(%Message{chat_id: ch_id}) do
     MyBotApi.send_message(ch_id, "Hello")
 
-    {:noreply, state}
+    nil
   end
 end
 

@@ -36,3 +36,4 @@ ttb_last_config
 *.iml
 .vscode
 doc/
+cover/*
