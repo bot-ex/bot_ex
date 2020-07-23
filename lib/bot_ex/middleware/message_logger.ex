@@ -11,7 +11,6 @@ defmodule BotEx.Middleware.MessageLogger do
   Debug messages in terminal
   """
   @impl true
-  @spec transform(Message.t()) :: Message.t()
   def transform(%Message{} = t_msg) do
     debug(t_msg)
 

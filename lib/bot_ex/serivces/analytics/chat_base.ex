@@ -20,10 +20,10 @@ defmodule BotEx.Services.Analytics.ChatBase do
   """
   @spec send_data(binary(), binary() | integer(), binary(), binary()) :: boolean()
   def send_data(msg, user_id, intent, platform) do
-    try do
-      api_key = get_api_key!()
+    api_key = get_api_key!()
 
-      HTTPoison.post!(
+    response =
+      HTTPoison.post(
         "https://chatbase.com/api/message",
         Jason.encode!(%{
           "api_key" => api_key,
@@ -43,10 +43,12 @@ defmodule BotEx.Services.Analytics.ChatBase do
         recv_timeout: 1000
       )
 
-      true
-    rescue
-      e in _ ->
-        Logger.error("send error: #{inspect(e)}")
+    case response do
+      {:ok, _} ->
+        true
+
+      {:error, e} ->
+        Logger.error("statistics send error: #{inspect(e)}")
         false
     end
   end

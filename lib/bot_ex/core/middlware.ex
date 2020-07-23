@@ -71,6 +71,5 @@ defmodule BotEx.Core.Middleware do
 
       {bot, all}
     end)
-    |> Enum.into([])
   end
 end

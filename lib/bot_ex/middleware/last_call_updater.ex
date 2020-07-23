@@ -12,7 +12,6 @@ defmodule BotEx.Middleware.LastCallUpdater do
   Save last user message to ets table
   """
   @impl true
-  @spec transform(Message.t()) :: Message.t()
   def transform(%Message{is_cmd: false} = t_msg) do
     t_msg
   end
