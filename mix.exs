@@ -48,13 +48,13 @@ defmodule BotEx.Mixfile do
       {:gettext, "~> 0.17"},
       {:exprintf, "~> 0.2"},
       {:logger_file_backend, "~> 0.0.11"},
-      {:timex, "~> 3.6"},
+      {:timex, "~> 3.7"},
       {:gen_worker, "~> 0.0.5"},
       {:earmark, "~> 1.4", only: :dev},
       {:ex_doc, "~> 0.21", only: :dev},
       {:deep_merge, "~> 1.0"},
-      {:jason, "~> 1.1"},
-      {:httpoison, "~> 1.6"},
+      {:jason, "~> 1.3"},
+      {:httpoison, "~> 1.8"},
       {:excoveralls, "~> 0.10", only: :test}
     ]
   end
