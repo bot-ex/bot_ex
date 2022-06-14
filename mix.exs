@@ -54,7 +54,7 @@ defmodule BotEx.Mixfile do
       {:ex_doc, "~> 0.21", only: :dev},
       {:deep_merge, "~> 1.0"},
       {:jason, "~> 1.3"},
-      {:httpoison, "~> 1.8"},
+      {:httpoison, "~> 1.7"},
       {:excoveralls, "~> 0.10", only: :test}
     ]
   end

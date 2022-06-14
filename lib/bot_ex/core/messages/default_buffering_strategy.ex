@@ -72,7 +72,9 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
 
   # coveralls-ignore-stop
 
-  @spec update_buffer(Message.t(), map()) :: map()
+  @spec update_buffer(Message.t() | atom(), map()) :: map()
+  defp update_buffer(:ignore, old_buffer), do: old_buffer
+
   defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer),
     do:
       update_in(old_buffer, [bot, handler], fn

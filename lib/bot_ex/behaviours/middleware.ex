@@ -10,6 +10,6 @@ defmodule BotEx.Behaviours.Middleware do
   ## Parameters
   - msg: `BotEx.Models.Message` from `MiddlewareParser` or other `Middleware`
   """
-  @callback transform(Message.t()) :: Message.t()
+  @callback transform(Message.t()) :: Message.t() | atom()
   # coveralls-ignore-stop
 end

@@ -5,22 +5,32 @@ defmodule BotEx.Core.Middleware do
   alias BotEx.Exceptions.BehaviourError
   alias BotEx.Middleware.LastCallUpdater
 
-  require Logger
+  import BotEx.Helpers.Debug, only: [print_debug: 1]
 
   @spec apply_to_messages(list(), any) :: [Message.t()]
   def apply_to_messages([parser | middleware], msg_list) do
     msg_list
     |> Enum.map(fn msg ->
+      print_debug("Handle message #{inspect(msg)}\n\nwith parser #{parser}")
+
       parser.transform(msg)
       |> call_middleware(middleware)
     end)
   end
 
   # apply middleware modules to one message
-  @spec call_middleware(Message.t(), list()) :: Message.t()
+  @spec call_middleware(Message.t() | atom(), list()) :: Message.t() | atom()
+  def call_middleware(:ignore, _) do
+    print_debug("Call middlewares was stoped")
+
+    :ignore
+  end
+
   def call_middleware(%Message{} = msg, []), do: msg
 
   def call_middleware(%Message{} = msg, [module | rest]) do
+    print_debug("Call middleware #{module}")
+
     module.transform(msg)
     |> call_middleware(rest)
   end
@@ -29,7 +39,8 @@ defmodule BotEx.Core.Middleware do
   @spec check_middleware!(list()) :: list() | no_return()
   def check_middleware!([]) do
     # coveralls-ignore-start
-    Logger.warn("No middleware was set")
+    print_debug("No middleware was set")
+
     []
     # coveralls-ignore-stop
   end
