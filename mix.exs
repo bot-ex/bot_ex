@@ -19,7 +19,7 @@ defmodule BotEx.Mixfile do
         "coveralls.html": :test
       ],
       package: [
-        licenses: "MIT",
+        licenses: ["MIT"],
         homepage_url: "https://github.com/bot-ex",
         links: %{"GitHub" => "https://github.com/bot-ex"}
       ]
