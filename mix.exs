@@ -20,9 +20,9 @@ defmodule BotEx.Mixfile do
       ],
       package: [
         licenses: "MIT",
-        homepage_url: "https://github.com/bot-ex"
-      ],
-      links: %{"GitHub" => "https://github.com/bot-ex"}
+        homepage_url: "https://github.com/bot-ex",
+        links: %{"GitHub" => "https://github.com/bot-ex"}
+      ]
     ]
   end
 
