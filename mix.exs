@@ -55,8 +55,7 @@ defmodule BotEx.Mixfile do
       {:deep_merge, "~> 1.0"},
       {:jason, "~> 1.3"},
       {:httpoison, "~> 1.7"},
-      {:excoveralls, "~> 0.18", only: :test},
-      {:ssl_verify_fun, "~> 1.1.6", manager: :rebar3, override: true}
+      {:excoveralls, "~> 0.18", only: :test}
     ]
   end
 

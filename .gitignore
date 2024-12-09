@@ -37,3 +37,9 @@ ttb_last_config
 .vscode
 doc/
 cover/*
+
+.devcontainer
+docker-compose.yml
+.env
+Dockerfile
+entrypoint.sh
