@@ -67,7 +67,7 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
 
   # coveralls-ignore-start
   defp put_handler_in_buffer(h) do
-    Logger.warn("Unsupported type #{inspect(h)}")
+    Logger.warning("Unsupported type #{inspect(h)}")
   end
 
   # coveralls-ignore-stop
@@ -83,7 +83,7 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
           Enum.concat(old_msgs, [msg])
 
         error ->
-          Logger.warn("Can not add message to \"#{error}\" buffer")
+          Logger.warning("Can not add message to \"#{error}\" buffer")
       end)
 
   @spec find_handler_by_name(atom(), String.t()) :: module()
@@ -98,7 +98,7 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
 
       # coveralls-ignore-start
       e ->
-        Logger.warn("Unsupported type #{inspect(e)}")
+        Logger.warning("Unsupported type #{inspect(e)}")
         false
         # coveralls-ignore-stop
     end)

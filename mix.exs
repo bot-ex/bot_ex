@@ -45,17 +45,18 @@ defmodule BotEx.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:gettext, "~> 0.17"},
+      {:gettext, "~> 0.20"},
       {:exprintf, "~> 0.2"},
       {:logger_file_backend, "~> 0.0.11"},
       {:timex, "~> 3.7"},
       {:gen_worker, "~> 0.0.5"},
       {:earmark, "~> 1.4", only: :dev},
-      {:ex_doc, "~> 0.21", only: :dev},
+      {:ex_doc, "~> 0.22", only: :dev},
       {:deep_merge, "~> 1.0"},
       {:jason, "~> 1.3"},
       {:httpoison, "~> 1.7"},
-      {:excoveralls, "~> 0.10", only: :test}
+      {:excoveralls, "~> 0.18", only: :test},
+      {:ssl_verify_fun, "~> 1.1.6", manager: :rebar3, override: true}
     ]
   end
 

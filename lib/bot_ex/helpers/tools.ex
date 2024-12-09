@@ -14,7 +14,7 @@ defmodule BotEx.Helpers.Tools do
   """
   @spec is_behaviours?(atom() | %{module_info: nil | keyword() | map()}, any()) :: boolean()
   def is_behaviours?(module, behaviour) do
-    module.module_info[:attributes]
+    module.module_info()[:attributes]
     |> Keyword.get_values(:behaviour)
     |> List.flatten()
     |> Enum.member?(behaviour)
