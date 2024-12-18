@@ -5,7 +5,7 @@ defmodule BotEx.Mixfile do
     [
       app: :bot_ex,
       description: "Bot development core for Elixir",
-      version: "1.0.1",
+      version: "1.0.2",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
       start_permanent: Mix.env() == :prod,
