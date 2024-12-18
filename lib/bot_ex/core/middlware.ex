@@ -11,7 +11,7 @@ defmodule BotEx.Core.Middleware do
   def apply_to_messages([parser | middleware], msg_list) do
     msg_list
     |> Enum.map(fn msg ->
-      print_debug("Handle message #{inspect(msg)}\n\nwith parser #{parser}")
+      print_debug("Handle message #{inspect(msg, limit: :infinity, pretty: true)}\n\nwith parser #{parser}")
 
       parser.transform(msg)
       |> call_middleware(middleware)

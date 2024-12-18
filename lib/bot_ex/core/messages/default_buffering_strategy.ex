@@ -20,6 +20,8 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
   end
 
   @impl true
+  def update_buffers_from_messages(msg_list, nil), do: update_buffers_from_messages(msg_list, %{})
+
   def update_buffers_from_messages(msg_list, current_buffer) do
     Enum.reduce(msg_list, current_buffer, &update_buffer/2)
   end
@@ -75,16 +77,22 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
   @spec update_buffer(Message.t() | atom(), map()) :: map()
   defp update_buffer(:ignore, old_buffer), do: old_buffer
 
-  defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer),
-    do:
-      update_in(old_buffer, [bot, handler], fn
-        old_msgs when is_list(old_msgs) ->
-          print_debug("Add message to buffer. Bot: #{bot} handler: #{handler}")
-          Enum.concat(old_msgs, [msg])
+  defp update_buffer(%Message{from: nil, module: nil}, old_buffer), do: old_buffer
+  defp update_buffer(%Message{from: _, module: nil}, old_buffer), do: old_buffer
+  defp update_buffer(%Message{from: nil, module: _}, old_buffer), do: old_buffer
 
-        error ->
-          Logger.warning("Can not add message to \"#{error}\" buffer")
-      end)
+  defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer) do
+    update_in(old_buffer, [bot, handler], fn
+      old_msgs when is_list(old_msgs) ->
+        print_debug("Add message to buffer. Bot: #{bot} handler: #{handler}")
+        Enum.concat(old_msgs, [msg])
+
+      error ->
+        Logger.warning(
+          "Can not add message to \"#{error}\" buffer. You may not have added this handler (#{handler}) in the bot (#{bot}) configuration"
+        )
+    end)
+  end
 
   @spec find_handler_by_name(atom(), String.t()) :: module()
   defp find_handler_by_name(bot, name) do
