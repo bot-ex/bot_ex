@@ -22,9 +22,8 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
   @impl true
   def update_buffers_from_messages(msg_list, nil), do: update_buffers_from_messages(msg_list, %{})
 
-  def update_buffers_from_messages(msg_list, current_buffer) do
-    Enum.reduce(msg_list, current_buffer, &update_buffer/2)
-  end
+  def update_buffers_from_messages(msg_list, current_buffer),
+    do: Enum.reduce(msg_list, current_buffer, &update_buffer/2)
 
   # scheduling flush all buffers
   @impl true
@@ -64,35 +63,52 @@ defmodule BotEx.Core.Messages.DefaultBufferingStrategy do
 
   @spec put_handler_in_buffer({atom(), integer()} | atom() | any()) :: tuple()
   defp put_handler_in_buffer({h, _time}), do: {h.get_cmd_name(), []}
-
   defp put_handler_in_buffer(h) when is_atom(h), do: {h.get_cmd_name(), []}
-
   # coveralls-ignore-start
-  defp put_handler_in_buffer(h) do
-    Logger.warning("Unsupported type #{inspect(h)}")
-  end
+  defp put_handler_in_buffer(h), do: Logger.warning("Unsupported type #{inspect(h)}")
 
   # coveralls-ignore-stop
 
   @spec update_buffer(Message.t() | atom(), map()) :: map()
   defp update_buffer(:ignore, old_buffer), do: old_buffer
 
+  defp update_buffer(%Message{from: bot, module: nil, data: nil, action: nil} = msg, old_buffer) do
+    case(Config.get(:fallback)) do
+      [{^bot, falback}] ->
+        handler = falback.get_cmd_name()
+
+        update_in(
+          old_buffer,
+          [bot, handler],
+          &update_messages_in_buffer(&1, bot, handler, %Message{msg | module: handler})
+        )
+
+      _ ->
+        Logger.warning(
+          "Unexpected message. You can define fallback parameter in the bot (#{bot}) configuration"
+        )
+
+        old_buffer
+    end
+  end
+
   defp update_buffer(%Message{from: nil, module: nil}, old_buffer), do: old_buffer
   defp update_buffer(%Message{from: _, module: nil}, old_buffer), do: old_buffer
   defp update_buffer(%Message{from: nil, module: _}, old_buffer), do: old_buffer
 
-  defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer) do
-    update_in(old_buffer, [bot, handler], fn
-      old_msgs when is_list(old_msgs) ->
-        print_debug("Add message to buffer. Bot: #{bot} handler: #{handler}")
-        Enum.concat(old_msgs, [msg])
+  defp update_buffer(%Message{from: bot, module: handler} = msg, old_buffer),
+    do: update_in(old_buffer, [bot, handler], &update_messages_in_buffer(&1, bot, handler, msg))
 
-      error ->
-        Logger.warning(
-          "Can not add message to \"#{error}\" buffer. You may not have added this handler (#{handler}) in the bot (#{bot}) configuration"
-        )
-    end)
+  defp update_messages_in_buffer(old_msgs, bot, handler, msg) when is_list(old_msgs) do
+    print_debug("Add message to buffer. Bot: #{bot} handler: #{handler}")
+    Enum.concat(old_msgs, [msg])
   end
+
+  defp update_messages_in_buffer(error, bot, handler, _msg),
+    do:
+      Logger.warning(
+        "Can not add message to \"#{error}\" buffer. You may not have added this handler (#{handler}) in the bot (#{bot}) configuration"
+      )
 
   @spec find_handler_by_name(atom(), String.t()) :: module()
   defp find_handler_by_name(bot, name) do

@@ -26,8 +26,6 @@ The core is built using three key concepts:
  config :bot_ex,
     #path to file with config for menu buttons
     menu_path: "config/menu.exs",
-    #path to file with routes aliases config
-    routes_path: "config/routes.exs",
     #default time for buffering message
     default_buffering_time: 3000,
     #default buffering strategy
@@ -59,8 +57,12 @@ The core is built using three key concepts:
     ],
     handlers: [
       my_bot: [
-        {MyBot.Handlers.Start, 1000} # {module, buffering time}
+        {MyBot.Handlers.Start, 1000}, # {module, buffering time}
+        Handlers.FallbackModule
       ]
+    ],
+    fallback: [
+      my_bot: Handlers.FallbackModule
     ],
     bots: [:my_bot]
   ```
@@ -88,16 +90,6 @@ touch config/menu.exs
 ```
 # Routing
 Routes create from defined in config handlers. Each handler have function `get_cmd_name/0` that return command name for this handler. When user call `/start` command, router find module for handle this message by answer `get_cmd_name/0` value.
-
-Optionally you can create file `routes.exs` and redefine or add aliases for your commands
-
-### Example `routes.exs`
-```elixir
-%{
-  my_bot:
-    %{"s" => MyBot.Handlers.Start}
-}
-```
 
 ## Example `Updater`
 

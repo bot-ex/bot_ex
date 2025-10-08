@@ -17,13 +17,13 @@ defmodule BotEx.Models.Message do
   """
   @type t() :: %__MODULE__{
           is_cmd: boolean(),
-          module: binary(),
-          action: binary(),
-          data: binary(),
+          module: nil | binary(),
+          action: nil | binary(),
+          data: nil | binary(),
           msg: any(),
           user: any(),
           user_id: integer(),
-          text: binary(),
+          text: nil | binary(),
           date_time: any(),
           force_new: boolean(),
           chat_id: integer(),
